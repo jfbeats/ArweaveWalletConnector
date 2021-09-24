@@ -1,0 +1,17 @@
+{
+	"name": "arweave-wallet-connector",
+	"version": "0.1.0",
+	"description": "Make your app compatible with any standard web wallet on Arweave",
+	"main": "dist/index.js",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc",
+		"prepare": "npm run build"
+	},
+	"license": "ISC",
+	"dependencies": {
+		"arweave": "^1.10.16"
+	}
+}
