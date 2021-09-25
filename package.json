@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"description": "Make your app compatible with any standard web wallet on Arweave",
 	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
