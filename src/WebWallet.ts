@@ -1,42 +1,27 @@
 import type Transaction from 'arweave/web/lib/transaction'
 
 export default class WebWallet {
-	private url: URL
-	private window: Window | undefined
+	private _url: URL
+	private _window: Window | null = null
+	private _address: string | null = null
 
 	constructor(url: string) {
-		this.url = new URL(url)
+		this._url = new URL(url)
 	}
 
-	async getAddress() {
+	get address() { return this._address }
 
-	}
+	async connect() { }
 
-	async getPublicKey() {
+	async disconnect() { }
 
-	}
+	async getPublicKey() { }
 
-	async signTransaction(tx: Transaction) {
+	async getArweaveConfig() { }
 
-	}
+	async signTransaction(tx: Transaction) { }
 
-	async sign() {
+	async sign() { }
 
-	}
-
-	async decrypt() {
-
-	}
-
-	async requestPermissions() {
-
-	}
-
-	async getPermissions() {
-
-	}
-
-	async getArweaveConfig() {
-
-	}
+	async decrypt() { }
 }
