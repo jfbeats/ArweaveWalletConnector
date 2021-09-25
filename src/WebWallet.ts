@@ -1,6 +1,7 @@
 import type Transaction from 'arweave/web/lib/transaction'
+import EventEmitter from 'eventemitter3'
 
-export class WebWallet {
+export class WebWallet extends EventEmitter {
 	private _url: URL
 	private _window: Window | null = null
 	private _address: string | null = null
@@ -10,6 +11,7 @@ export class WebWallet {
 	}[] = []
 
 	constructor(url: string) {
+		super()
 		this._url = new URL(url.includes('://') ? url : 'https://' + url)
 		this._url.hash = new URLSearchParams({ origin: window.location.origin }).toString()
 	}

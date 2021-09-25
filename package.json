@@ -13,6 +13,7 @@
 	},
 	"license": "ISC",
 	"dependencies": {
-		"arweave": "^1.10.16"
+		"arweave": "^1.10.16",
+		"eventemitter3": "^4.0.7"
 	}
 }
