@@ -1,8 +1,8 @@
 <template>
 	<div class="app">
 		<ArweaveOutlineLogo class="logo" />
-		<WalletSelector />
-
+		<WalletSelector @submit="connect" :loading="data.loading" />
+		<div>{{ data.address }}</div>
 	</div>
 </template>
 
@@ -11,20 +11,34 @@
 <script lang="ts">
 import WalletSelector from "./components/WalletSelector.vue";
 import ArweaveOutlineLogo from "./components/ArweaveOutlineLogo.vue";
-import { defineComponent } from "vue";
+import { defineComponent, reactive } from "vue";
 
+// Import the wallet connector
 import { WebWallet } from "arweave-wallet-connector";
 
 export default defineComponent({
 	name: "App",
 	components: { WalletSelector, ArweaveOutlineLogo },
 	setup() {
+		const data = reactive({
+			address: null as null | string,
+			loading: false,
+			error: "",
+		});
 
-		const connect = (url: string) => {
-			const wallet = new WebWallet(url || "arweave.app");
-			wallet.connect();
+		let wallet: WebWallet | null = null;
+
+		// Initialize the wallet from user submitted URL or preselected options
+		const connect = async (url: string) => {
+			wallet = new WebWallet(url);
+			wallet.on("connect", (address) => (data.address = address));
+			wallet.on("disconnect", () => (data.address = null));
+			data.loading = true;
+			await wallet.connect();
+			data.loading = false;
 		};
-		return { connect };
+
+		return { data, connect };
 	},
 });
 </script>
@@ -60,25 +74,6 @@ html {
 body {
 	margin: 0;
 	padding: 0;
-}
-
-button {
-	color: inherit;
-	background: none;
-	border: none;
-	margin: 0;
-	padding: 0;
-	font-size: 1em;
-	cursor: pointer;
-}
-
-input {
-	color: inherit;
-	background: none;
-	border: none;
-	margin: 0;
-	padding: 0;
-	font-size: 1em;
 }
 
 #app {

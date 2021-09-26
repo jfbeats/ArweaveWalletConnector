@@ -1,8 +1,8 @@
 <template>
-		<div class="url-input">
-			<input class="url" v-model="url">
-			<button class="action" @click="connect">Connect</button>
-		</div>
+	<div class="url-input">
+		<input class="url" v-model="url" :placeholder="defaultURL" @keydown.enter="submit">
+		<button class="action" @click="submit">Connect</button>
+	</div>
 </template>
 
 
@@ -11,9 +11,11 @@
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
-	setup() {
-		const url = ref("arweave.app");
-		return { url };
+	setup(props, { emit }) {
+		const defaultURL = "arweave.app";
+		const url = ref(defaultURL);
+		const submit = () => emit("submit", url.value || "arweave.app");
+		return { defaultURL, url, submit };
 	},
 });
 </script>
@@ -22,8 +24,8 @@ export default defineComponent({
 
 <style scoped>
 .url-input {
-	background: #161616;
-	border: 0.5px solid #333;
+	background: #ffffff05;
+	border: 0.5px solid #ffffff20;
 	display: flex;
 	border-radius: 16px;
 	width: 100%;
@@ -35,10 +37,30 @@ export default defineComponent({
 	padding: 2em;
 	flex: 1 1 0;
 	min-width: 0;
+	outline: none;
 }
 
 .action {
 	padding: 2em;
 	cursor: pointer;
+}
+
+button {
+	color: inherit;
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	font-size: 1em;
+	cursor: pointer;
+}
+
+input {
+	color: inherit;
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	font-size: 1em;
 }
 </style>
