@@ -1,7 +1,9 @@
 <template>
 	<div class="url-input">
-		<input class="url" v-model="url" :placeholder="defaultURL" @keydown.enter="submit">
-		<button class="action" @click="submit">Connect</button>
+		<input class="url" v-model="url" :placeholder="defaultURL" @keydown.enter="connect">
+		<button class="action" @click="connected ? disconnect() : connect()">
+			{{ loading ? 'Unlock' : connected ? 'Disconnect' : 'Connect' }}
+		</button>
 	</div>
 </template>
 
@@ -11,11 +13,13 @@
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
+	props: { loading: Boolean, connected: Boolean },
 	setup(props, { emit }) {
-		const defaultURL = "arweave.app";
+		const defaultURL = "http://localhost:8080";
 		const url = ref(defaultURL);
-		const submit = () => emit("submit", url.value || "arweave.app");
-		return { defaultURL, url, submit };
+		const connect = () => emit("connect", url.value || defaultURL);
+		const disconnect = () => emit("disconnect");
+		return { defaultURL, url, connect, disconnect };
 	},
 });
 </script>
