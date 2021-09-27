@@ -30,7 +30,7 @@ export default defineComponent({
 
 		// Initialize the wallet from user submitted URL or preselected options
 		const connect = async (url: string) => {
-			if (wallet) { return }
+			if (wallet) return;
 			wallet = new WebWallet(url);
 			wallet.on("connect", (address) => (data.address = address));
 			wallet.on("disconnect", () => (data.address = null));
@@ -40,8 +40,9 @@ export default defineComponent({
 		};
 
 		const disconnect = () => {
-			wallet?.disconnect()
-		}
+			wallet?.disconnect();
+			wallet = null;
+		};
 
 		return { data, connect, disconnect };
 	},
