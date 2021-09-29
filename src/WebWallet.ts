@@ -3,6 +3,7 @@ import EventEmitter from 'eventemitter3'
 
 export class WebWallet extends EventEmitter {
 	private _url: URL
+	private _iframe: HTMLIFrameElement | null = null
 	private _window: Window | null = null
 	private _address: string | null = null
 	private _listening: Boolean = false
@@ -22,7 +23,8 @@ export class WebWallet extends EventEmitter {
 
 	listener = (e: MessageEvent) => {
 		console.info(e)
-		if (e.source !== this._window || e.origin !== this._url.origin) { return }
+		if (e.source !== this._window && e.source !== this._iframe?.contentWindow
+			|| e.origin !== this._url.origin) { return }
 		if (e.data.method === 'connect') {
 			this._address = e.data.params.address
 			this.emit('connect', this._address)
@@ -37,23 +39,31 @@ export class WebWallet extends EventEmitter {
 			window.addEventListener('message', this.listener)
 			this._listening = true
 		}
-		if (!this._window) {
-			window.name = 'parent';
-			const iframe = document.createElement('iframe')
-			iframe.src = this._url.toString()
-			iframe.style.display = 'none'
-			this._window = iframe.contentWindow
+		if (!this._iframe) {
+			window.name = 'parent'
+			this._iframe = document.createElement('iframe')
+			this._iframe.src = this._url.toString()
+			this._iframe.style.display = 'none'
 			if (document.readyState === 'complete' || document.readyState === 'interactive') {
-				document.body.appendChild(iframe)
+				document.body.appendChild(this._iframe as Node)
 			} else {
-				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(iframe))
+				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(this._iframe as Node))
 			}
+		}
+		if (!this._window) {
+			this._window = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		}
 		return new Promise((resolve, reject) => this.once('connect', resolve))
 	}
 
 	async disconnect() {
-		if (this._window) { this._window.close() }
+		if (this._iframe) {
+			this._iframe.remove()
+			this._iframe = null
+		}
+		if (this._window) {
+			this._window.close()
+		}
 		window.removeEventListener('message', this.listener)
 		this._listening = false
 		this._address = null
