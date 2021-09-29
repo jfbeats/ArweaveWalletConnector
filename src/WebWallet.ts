@@ -39,7 +39,15 @@ export class WebWallet extends EventEmitter {
 		}
 		if (!this._window) {
 			window.name = 'parent';
-			this._window = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
+			const iframe = document.createElement('iframe')
+			iframe.src = this._url.toString()
+			iframe.style.display = 'none'
+			this._window = iframe.contentWindow
+			if (document.readyState === 'complete' || document.readyState === 'interactive') {
+				document.body.appendChild(iframe)
+			} else {
+				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(iframe))
+			}
 		}
 		return new Promise((resolve, reject) => this.once('connect', resolve))
 	}
