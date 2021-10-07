@@ -58,11 +58,12 @@ export class WebWallet extends EventEmitter {
 
 	async disconnect() {
 		if (this._iframe) {
-			this._iframe.src = ''
+			this._iframe.src = 'about:blank'
 			this._iframe.remove()
 			this._iframe = null
 		}
 		if (this._window) {
+			this._window.location.href = 'about:blank'
 			this._window.close()
 		}
 		window.removeEventListener('message', this.listener)
