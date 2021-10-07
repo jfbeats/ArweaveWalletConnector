@@ -22,9 +22,9 @@ export class WebWallet extends EventEmitter {
 	get connected() { return !!this._address }
 
 	listener = (e: MessageEvent) => {
-		console.info(e)
 		if (e.source !== this._window && e.source !== this._iframe?.contentWindow
 			|| e.origin !== this._url.origin) { return }
+		console.info('WalletConnector:', e)
 		if (e.data.method === 'connect') {
 			this._address = e.data.params.address
 			this.emit('connect', this._address)
@@ -34,7 +34,7 @@ export class WebWallet extends EventEmitter {
 		}
 	}
 
-	async connect(message?: object): Promise<any> {
+	async connect(): Promise<any> {
 		if (!this._listening) {
 			window.addEventListener('message', this.listener)
 			this._listening = true

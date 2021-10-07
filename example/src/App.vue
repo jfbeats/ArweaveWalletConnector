@@ -1,7 +1,7 @@
 <template>
 	<div class="app">
 		<ArweaveOutlineLogo class="logo" />
-		<WalletSelector @connect="connect" @disconnect="disconnect" :loading="data.loading" :connected="!!data.address" />
+		<WalletSelector @connect="connectConnector" @disconnect="disconnectConnector" :loading="data.loading" :connected="!!data.address" />
 		<div>{{ data.address }}</div>
 	</div>
 </template>
@@ -29,22 +29,28 @@ export default defineComponent({
 		let wallet: WebWallet | null = null;
 
 		// Initialize the wallet from user submitted URL or preselected options
-		const connect = async (url: string) => {
+		const connectConnector = async (url: string) => {
 			if (wallet) return;
 			wallet = new WebWallet(url);
-			wallet.on("connect", (address) => (data.address = address));
-			wallet.on("disconnect", () => (data.address = null));
+			wallet.on("connect", (address) => {
+				data.loading = false;
+				data.address = address;
+			});
+			wallet.on("disconnect", () => {
+				data.loading = false;
+				data.address = null;
+				wallet = null;
+			});
 			data.loading = true;
-			await wallet.connect();
-			data.loading = false;
+			wallet.connect();
 		};
 
-		const disconnect = () => {
-			wallet?.disconnect();
+		const disconnectConnector = async () => {
+			await wallet?.disconnect();
 			wallet = null;
 		};
 
-		return { data, connect, disconnect };
+		return { data, connectConnector, disconnectConnector };
 	},
 });
 </script>
