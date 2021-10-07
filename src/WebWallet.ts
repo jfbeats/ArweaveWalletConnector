@@ -58,6 +58,7 @@ export class WebWallet extends EventEmitter {
 
 	async disconnect() {
 		if (this._iframe) {
+			this._iframe.src = ''
 			this._iframe.remove()
 			this._iframe = null
 		}
