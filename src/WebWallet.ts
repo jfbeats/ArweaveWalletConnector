@@ -12,10 +12,10 @@ export class WebWallet extends EventEmitter {
 		reject: (reason?: Error) => void
 	}[] = []
 
-	constructor(url: string) {
+	constructor(url: string, appInfo: { name: string, logo: string }) {
 		super()
 		this._url = new URL(url.includes('://') ? url : 'https://' + url)
-		this._url.hash = new URLSearchParams({ origin: window.location.origin }).toString()
+		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...appInfo }).toString()
 	}
 
 	get address() { return this._address }
