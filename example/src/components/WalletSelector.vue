@@ -15,7 +15,7 @@ import { defineComponent, ref } from "vue";
 export default defineComponent({
 	props: { loading: Boolean, connected: Boolean },
 	setup(props, { emit }) {
-		const defaultURL = process.env.NODE_ENV === 'development' ? "http://localhost:8080" : 'arweave.app';
+		const defaultURL = import.meta.env.DEV ? "http://localhost:8080" : 'arweave.app';
 		const url = ref(defaultURL);
 		const connect = () => emit("connect", url.value || defaultURL);
 		const disconnect = () => emit("disconnect");
