@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"module": "esnext",
-		"outDir": "dist/esm",
+		"outDir": "dist",
 		"target": "esnext",
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
