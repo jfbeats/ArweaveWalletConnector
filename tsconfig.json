@@ -1,14 +1,26 @@
 {
 	"compilerOptions": {
-		"outDir": "dist",
-		"sourceMap": true,
+		"module": "esnext",
+		"outDir": "dist/esm",
+		"target": "esnext",
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": "src",
 		"declaration": true,
-		"strict": true,
-		"target": "es2017",
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"inlineSourceMap": false,
+		"lib": [ "esnext", "dom" ],
+		"listEmittedFiles": false,
+		"listFiles": false,
 		"moduleResolution": "node",
-		"module": "commonjs",
+		"noFallthroughCasesInSwitch": true,
+		"pretty": true,
+		"resolveJsonModule": true,
 		"rootDir": "src",
-		"esModuleInterop": true
+		"skipLibCheck": true,
+		"strict": true,
+		"traceResolution": false
 	},
 	"include": [
 		"src"
