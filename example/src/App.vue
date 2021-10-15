@@ -3,56 +3,65 @@
 		<ArweaveOutlineLogo class="logo" />
 		<WalletSelector @connect="connectConnector" @disconnect="disconnectConnector" :loading="data.loading" :connected="!!data.address" />
 		<div>{{ data.address }}</div>
+		<button v-if="data.address" @click="signTx">Sign Transaction</button>
 	</div>
 </template>
 
 
 
 <script lang="ts">
-import WalletSelector from "./components/WalletSelector.vue";
-import ArweaveOutlineLogo from "./components/ArweaveOutlineLogo.vue";
-import { defineComponent, reactive } from "vue";
+import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
+import WalletSelector from './components/WalletSelector.vue'
+import { defineComponent, reactive } from 'vue'
+import Arweave from 'arweave'
 
 // Import the wallet connector
-import { WebWallet } from "arweave-wallet-connector";
+import { WebWallet } from 'arweave-wallet-connector'
 
 export default defineComponent({
-	name: "App",
-	components: { WalletSelector, ArweaveOutlineLogo },
+	name: 'App',
+	components: { ArweaveOutlineLogo, WalletSelector },
 	setup() {
 		const data = reactive({
 			address: null as null | string,
 			loading: false,
-			error: "",
-		});
+			error: '',
+		})
 
-		let wallet: WebWallet | null = null;
+		let wallet: WebWallet | null = null
 
 		// Initialize the wallet from user submitted URL or preselected options
 		const connectConnector = async (url: string) => {
-			if (wallet) return;
-			wallet = new WebWallet(url, { name: 'Connector Example', logo: location.href + '/placeholder.svg' });
-			wallet.on("connect", (address) => {
-				data.loading = false;
-				data.address = address;
-			});
-			wallet.on("disconnect", () => {
-				data.loading = false;
-				data.address = null;
-				wallet = null;
-			});
-			data.loading = true;
-			wallet.connect();
-		};
+			if (wallet) return
+			wallet = new WebWallet(url, { name: 'Connector Example', logo: location.href + '/placeholder.svg' })
+			wallet.on('connect', (address) => {
+				data.loading = false
+				data.address = address
+			})
+			wallet.on('disconnect', () => {
+				data.loading = false
+				data.address = null
+				wallet = null
+			})
+			data.loading = true
+			wallet.connect()
+		}
 
 		const disconnectConnector = async () => {
-			await wallet?.disconnect();
-			wallet = null;
-		};
+			await wallet?.disconnect()
+			wallet = null
+		}
 
-		return { data, connectConnector, disconnectConnector };
+		const signTx = async () => {
+			if (!wallet) return
+			const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
+			const transaction = await arweave.createTransaction({ data: 'hello' })
+			wallet.signTransaction(transaction)
+		}
+
+		return { data, connectConnector, disconnectConnector, signTx }
 	},
-});
+})
 </script>
 
 
@@ -73,6 +82,18 @@ export default defineComponent({
 .logo {
 	height: 400px;
 	opacity: 0.9;
+}
+
+button {
+	color: inherit;
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	font-size: 1em;
+	cursor: pointer;
+	line-height: inherit;
+	text-align: inherit;
 }
 </style>
 

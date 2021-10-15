@@ -22,8 +22,7 @@ export class WebWallet extends EventEmitter {
 	get connected() { return !!this._address }
 
 	listener = (e: MessageEvent) => {
-		if (e.source !== this._window && e.source !== this._iframe?.contentWindow
-			|| e.origin !== this._url.origin) { return }
+		if (e.source !== this._window && e.source !== this._iframe?.contentWindow || e.origin !== this._url.origin) { return }
 		console.info('WalletConnector:', e)
 		if (e.data.method === 'connect') {
 			this._address = e.data.params.address
@@ -76,13 +75,24 @@ export class WebWallet extends EventEmitter {
 
 	async getArweaveConfig() { }
 
-	async signTransaction(tx: Transaction) { }
+	async signTransaction(tx: Transaction) {
+		const res = await this.postMessage({
+			method: 'signTransaction',
+			params: JSON.stringify(tx)
+		})
+	}
 
 	async sign() { }
 
 	async decrypt() { }
 
 	async postMessage(message: object) {
-		this._window?.postMessage({ jsonrpc: '2.0', ...message }, this._url.origin)
+		const id = this._promiseController.length
+		return new Promise((resolve, reject) => {
+			this._promiseController.push({ resolve, reject })
+			const post = { ...message, jsonrpc: '2.0', id }
+			this._iframe?.contentWindow?.postMessage(post, this._url.origin)
+			this._window?.postMessage(post, this._url.origin)
+		})
 	}
 }
