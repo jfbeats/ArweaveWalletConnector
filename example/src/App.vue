@@ -33,7 +33,7 @@ export default defineComponent({
 		// Initialize the wallet from user submitted URL or preselected options
 		const connectConnector = async (url: string) => {
 			if (wallet) return
-			wallet = new WebWallet(url, { name: 'Connector Example', logo: `${location.origin}/placeholder.svg` })
+			wallet = new WebWallet(url, { name: 'Connector Example', logo: `${location.href}placeholder.svg` })
 			wallet.on('connect', (address) => {
 				data.loading = false
 				data.address = address
