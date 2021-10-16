@@ -9,9 +9,11 @@
   "dependencies": {
     "arweave": "^1.10.18",
     "arweave-wallet-connector": "file:..",
+    "buffer": "^6.0.3",
     "vue": "^3.2.16"
   },
   "devDependencies": {
+    "@types/node": "^16.11.0",
     "@vitejs/plugin-vue": "^1.9.3",
     "typescript": "^4.4.3",
     "vite": "^2.6.4",
