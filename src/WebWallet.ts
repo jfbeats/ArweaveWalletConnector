@@ -52,7 +52,7 @@ export class WebWallet extends EventEmitter {
 		if (!this._window) {
 			this._window = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		}
-		return new Promise((resolve, reject) => this.once('connect', resolve))
+		return new Promise(resolve => this.once('connect', resolve))
 	}
 
 	async disconnect() {

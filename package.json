@@ -6,7 +6,9 @@
 	"module": "./dist/index.js",
 	"main": "./dist/index.js",
 	"exports": "./dist/index.js",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsc",
 		"prepare": "npm run build"
