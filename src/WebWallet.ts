@@ -15,7 +15,7 @@ export class WebWallet extends EventEmitter {
 	constructor(url: string, appInfo: { name: string, logo: string }) {
 		super()
 		this._url = new URL(url.includes('://') ? url : 'https://' + url)
-		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...appInfo }).toString()
+		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...appInfo, session: Math.random().toString().slice(2) }).toString()
 	}
 
 	get address() { return this._address }
@@ -25,6 +25,7 @@ export class WebWallet extends EventEmitter {
 		if (e.source !== this._window && e.source !== this._iframe?.contentWindow || e.origin !== this._url.origin) { return }
 		console.info('WalletConnector:', e)
 		if (e.data.method === 'connect') {
+			if (this._address === e.data.params.address) { return }
 			this._address = e.data.params.address
 			this.emit('connect', this._address)
 		}
