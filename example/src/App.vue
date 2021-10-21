@@ -23,7 +23,7 @@ export default defineComponent({
 	components: { ArweaveOutlineLogo, WalletSelector },
 	setup() {
 		const data = reactive({
-			address: null as null | string,
+			address: undefined as undefined | null | string,
 			loading: false,
 			error: '',
 		})
