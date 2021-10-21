@@ -1,10 +1,12 @@
 import type Transaction from 'arweave/web/lib/transaction'
-import EventEmitter from 'eventemitter3'
+import Emitter from './Emitter'
 
-export class WebWallet extends EventEmitter {
+export class WebWallet extends Emitter {
 	private _url: URL
 	private _iframe: HTMLIFrameElement | null = null
-	private _window: Window | null = null
+	private _popup: Window | null = null
+	private _usePopup: Boolean = true
+	private _keepPopup: Boolean = false
 	private _address: string | null = null
 	private _listening: Boolean = false
 	private _promiseController: {
@@ -21,16 +23,27 @@ export class WebWallet extends EventEmitter {
 	get address() { return this._address }
 	get connected() { return !!this._address }
 
-	listener = (e: MessageEvent) => {
-		if (e.source !== this._window && e.source !== this._iframe?.contentWindow || e.origin !== this._url.origin) { return }
+
+
+	private listener = (e: MessageEvent) => {
+		const { method, params } = e.data
+		if (
+			e.source !== this._popup && e.source !== this._iframe?.contentWindow
+			|| e.origin !== this._url.origin
+			|| typeof method !== 'string'
+		) { return }
 		console.info('WalletConnector:', e)
-		if (e.data.method === 'connect') {
-			if (this._address === e.data.params.address) { return }
-			this._address = e.data.params.address
+		if (method === 'connect') {
+			const address = params
+			if (typeof address !== 'string' || this._address === address) { return }
+			this._address = address
 			this.emit('connect', this._address)
 		}
-		if (e.data.method === 'disconnect') {
-			this.disconnect()
+		if (method === 'disconnect') { this.disconnect() }
+		if (method === 'usePopup') {
+			const use = params
+			if (typeof use !== 'boolean') { return }
+			this._usePopup = use
 		}
 	}
 
@@ -50,8 +63,8 @@ export class WebWallet extends EventEmitter {
 				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(this._iframe as Node))
 			}
 		}
-		if (!this._window) {
-			this._window = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
+		if (!this._popup) {
+			this._popup = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		}
 		return new Promise(resolve => this.once('connect', resolve))
 	}
@@ -62,9 +75,9 @@ export class WebWallet extends EventEmitter {
 			this._iframe.remove()
 			this._iframe = null
 		}
-		if (this._window) {
-			this._window.location.href = 'about:blank'
-			this._window.close()
+		if (this._popup) {
+			this._popup.location.href = 'about:blank'
+			this._popup.close()
 		}
 		window.removeEventListener('message', this.listener)
 		this._listening = false
@@ -93,7 +106,7 @@ export class WebWallet extends EventEmitter {
 			this._promiseController.push({ resolve, reject })
 			const post = { ...message, jsonrpc: '2.0', id }
 			this._iframe?.contentWindow?.postMessage(post, this._url.origin)
-			this._window?.postMessage(post, this._url.origin)
+			this._popup?.postMessage(post, this._url.origin)
 		})
 	}
 }
