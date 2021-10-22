@@ -3,11 +3,11 @@ import Emitter from './Emitter'
 
 export class WebWallet extends Emitter {
 	private _url: URL
-	private _iframe: HTMLIFrameElement | null = null
-	private _popup: Window | null = null
+	private _iframe: HTMLIFrameElement | null | undefined
+	private _popup: Window | null | undefined
 	private _usePopup: Boolean = true
 	private _keepPopup: Boolean = false
-	private _address: string | null = null
+	private _address: string | null | undefined
 	private _listening: Boolean = false
 	private _promiseController: {
 		resolve: (value?: string) => void,
@@ -45,6 +45,11 @@ export class WebWallet extends Emitter {
 			if (typeof use !== 'boolean') { return }
 			this._usePopup = use
 		}
+		if (method === 'keepPopup') {
+			const keep = params
+			if (typeof keep !== 'boolean') { return }
+			this._keepPopup = keep
+		}
 	}
 
 	async connect(): Promise<any> {
@@ -63,9 +68,7 @@ export class WebWallet extends Emitter {
 				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(this._iframe as Node))
 			}
 		}
-		if (!this._popup) {
-			this._popup = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
-		}
+		this.openPopup()
 		return new Promise(resolve => this.once('connect', resolve))
 	}
 
@@ -75,10 +78,7 @@ export class WebWallet extends Emitter {
 			this._iframe.remove()
 			this._iframe = null
 		}
-		if (this._popup) {
-			this._popup.location.href = 'about:blank'
-			this._popup.close()
-		}
+		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
 		this._listening = false
 		this._address = null
@@ -90,7 +90,7 @@ export class WebWallet extends Emitter {
 	async getArweaveConfig() { }
 
 	async signTransaction(tx: Transaction) {
-		const res = await this.postMessage({
+		const res = await this.broadcastMessage({
 			method: 'signTransaction',
 			params: JSON.stringify(tx)
 		})
@@ -100,13 +100,39 @@ export class WebWallet extends Emitter {
 
 	async decrypt() { }
 
-	async postMessage(message: object) {
+	keepPopup(keep: Boolean) {
+		this._keepPopup = keep
+		if (keep) { this.openPopup() }
+	}
+
+	async broadcastMessage(message: object) {
 		const id = this._promiseController.length
-		return new Promise((resolve, reject) => {
-			this._promiseController.push({ resolve, reject })
-			const post = { ...message, jsonrpc: '2.0', id }
-			this._iframe?.contentWindow?.postMessage(post, this._url.origin)
-			this._popup?.postMessage(post, this._url.origin)
-		})
+		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
+		const post = { ...message, jsonrpc: '2.0', id }
+		this.postMessage(this._iframe?.contentWindow, post)
+		this.openPopup(post)
+		await promise
+		await new Promise(resolve => setTimeout(resolve, 400))
+		if (this._promiseController.length === id + 1) { this.closePopup() }
+		return promise
+	}
+
+	private async openPopup(post?: object) {
+		if (!this._popup && this._usePopup) {
+			this._popup = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
+		}
+		if (post) { this.postMessage(this._popup, post) }
+	}
+
+	private closePopup(force?: Boolean) {
+		if (!this._popup || this._keepPopup) { return }
+		this._popup.location.href = 'about:blank'
+		this._popup.close()
+	}
+
+	async postMessage(window: Window | null | undefined, post: Object) {
+		if (!window) { return }
+		// await ready
+		window.postMessage(post, this._url.origin)
 	}
 }
