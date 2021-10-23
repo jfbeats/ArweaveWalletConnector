@@ -1,5 +1,5 @@
 import mitt from 'mitt'
-type Handler = (e?: string) => any
+type Handler = (e: string) => any
 
 export default class Emitter {
 	private emitter = mitt()

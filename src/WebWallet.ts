@@ -26,13 +26,18 @@ export class WebWallet extends Emitter {
 
 
 	private listener = (e: MessageEvent) => {
-		const { method, params } = e.data
+		const { method, params, id, result, error } = e.data
 		if (
 			e.source !== this._popup && e.source !== this._iframe?.contentWindow
 			|| e.origin !== this._url.origin
-			|| typeof method !== 'string'
 		) { return }
-		console.info('WalletConnector:', e)
+		console.info(`WalletConnector:${e.source === this._popup ? 'popup' : 'iframe'}`, e.data)
+		if (typeof id === 'number') {
+			if (!this._promiseController[id]) { throw 'received result to nonexistent request' }
+			if (error) { this._promiseController[id].reject(error) }
+			if (result) { this._promiseController[id].resolve(result) }
+		}
+		if (typeof method !== 'string') { return }
 		if (method === 'connect') {
 			const address = params
 			if (typeof address !== 'string' || this._address === address) { return }
@@ -52,7 +57,7 @@ export class WebWallet extends Emitter {
 		}
 	}
 
-	async connect(): Promise<any> {
+	connect(): Promise<string> {
 		if (!this._listening) {
 			window.addEventListener('message', this.listener)
 			this._listening = true
@@ -72,7 +77,7 @@ export class WebWallet extends Emitter {
 		return new Promise(resolve => this.once('connect', resolve))
 	}
 
-	async disconnect() {
+	disconnect() {
 		if (this._iframe) {
 			this._iframe.src = 'about:blank'
 			this._iframe.remove()
@@ -90,7 +95,7 @@ export class WebWallet extends Emitter {
 	async getArweaveConfig() { }
 
 	async signTransaction(tx: Transaction) {
-		const res = await this.broadcastMessage({
+		const res = await this.postMessage({
 			method: 'signTransaction',
 			params: JSON.stringify(tx)
 		})
@@ -103,36 +108,36 @@ export class WebWallet extends Emitter {
 	keepPopup(keep: Boolean) {
 		this._keepPopup = keep
 		if (keep) { this.openPopup() }
+		else { this.closePopup() }
 	}
 
-	async broadcastMessage(message: object) {
+	postMessage(message: object) {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
-		const post = { ...message, jsonrpc: '2.0', id }
-		this.postMessage(this._iframe?.contentWindow, post)
-		this.openPopup(post)
-		await promise
-		await new Promise(resolve => setTimeout(resolve, 400))
-		if (this._promiseController.length === id + 1) { this.closePopup() }
+		const fullMessage = { ...message, id }
+		this.deliverMessage(this._iframe?.contentWindow, fullMessage)
+		this.openPopup(fullMessage)
+		// popup should ask to be kept open
+		promise.then(() => this.closePopup()).catch(() => this.closePopup())
 		return promise
 	}
 
-	private async openPopup(post?: object) {
-		if (!this._popup && this._usePopup) {
+	private openPopup(fullMessage?: object) {
+		if ((!this._popup || this._popup?.closed) && this._usePopup) {
 			this._popup = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		}
-		if (post) { this.postMessage(this._popup, post) }
+		if (fullMessage) { this.deliverMessage(this._popup, fullMessage) }
 	}
 
 	private closePopup(force?: Boolean) {
-		if (!this._popup || this._keepPopup) { return }
+		if ((!this._popup || this._popup?.closed) || this._keepPopup) { return }
 		this._popup.location.href = 'about:blank'
 		this._popup.close()
 	}
 
-	async postMessage(window: Window | null | undefined, post: Object) {
+	private async deliverMessage(window: Window | null | undefined, fullMessage: Object) {
 		if (!window) { return }
-		// await ready
-		window.postMessage(post, this._url.origin)
+		// await ready, popup might get closed before ready, cancel if so
+		window.postMessage(fullMessage, this._url.origin)
 	}
 }
