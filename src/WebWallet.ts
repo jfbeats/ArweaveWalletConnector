@@ -3,21 +3,21 @@ import Emitter from './Emitter'
 
 type ChannelController = {
 	window?: Window | null,
-	promise?: Promise<unknown> | null,
-	resolve?: ((value?: unknown) => void) | null,
-	reject?: ((value?: unknown) => void) | null,
+	promise?: Promise<unknown>,
+	resolve?: (value?: unknown) => void,
+	reject?: (value?: unknown) => void,
 }
 
 
 
 export class WebWallet extends Emitter {
 	private _url: URL
-	private _iframeEl: HTMLIFrameElement | null | undefined
+	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
 	private _popup: ChannelController = {}
 	private _usePopup: Boolean = true
 	private _keepPopup: Boolean = false
-	private _address: string | null | undefined
+	private _address?: string
 	private _listening: Boolean = false
 	private _promiseController: {
 		resolve: (value?: string) => void,
@@ -71,11 +71,10 @@ export class WebWallet extends Emitter {
 		}
 	}
 
-	connect(): Promise<string> {
-		if (!this._listening) {
-			window.addEventListener('message', this.listener)
-			this._listening = true
-		}
+	async connect(): Promise<string | undefined> {
+		if (this._listening) { return this._address }
+		window.addEventListener('message', this.listener)
+		this._listening = true
 		this.openIframe()
 		this.openPopup()
 		return new Promise(resolve => this.once('connect', resolve))
@@ -86,7 +85,7 @@ export class WebWallet extends Emitter {
 		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
 		this._listening = false
-		this._address = null
+		this._address = undefined
 		this.emit('disconnect')
 	}
 
@@ -145,7 +144,8 @@ export class WebWallet extends Emitter {
 		if (!this._iframeEl) { return }
 		this._iframeEl.src = 'about:blank'
 		this._iframeEl.remove()
-		this._iframeEl = null
+		this._iframeEl = undefined
+		this._iframe.promise?.catch()
 		this._iframe.reject?.()
 		this._iframe = {}
 	}
@@ -165,6 +165,7 @@ export class WebWallet extends Emitter {
 		if (this._keepPopup && !force) { return }
 		this._popup.window.location.href = 'about:blank'
 		this._popup.window.close()
+		this._popup.promise?.catch()
 		this._popup.reject?.()
 		this._popup = {}
 	}
