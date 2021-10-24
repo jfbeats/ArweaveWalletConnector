@@ -145,7 +145,6 @@ export class WebWallet extends Emitter {
 		this._iframeEl.src = 'about:blank'
 		this._iframeEl.remove()
 		this._iframeEl = undefined
-		this._iframe.promise?.catch()
 		this._iframe.reject?.()
 		this._iframe = {}
 	}
@@ -165,7 +164,6 @@ export class WebWallet extends Emitter {
 		if (this._keepPopup && !force) { return }
 		this._popup.window.location.href = 'about:blank'
 		this._popup.window.close()
-		this._popup.promise?.catch()
 		this._popup.reject?.()
 		this._popup = {}
 	}
@@ -173,7 +171,7 @@ export class WebWallet extends Emitter {
 	private async deliverMessage(channel: ChannelController, fullMessage?: Object) {
 		if (!channel.promise) { return }
 		if (!fullMessage) { return channel.promise }
-		channel.promise = channel.promise.then(() => channel.window?.postMessage(fullMessage, this._url.origin))
+		channel.promise = channel.promise.then(() => channel.window?.postMessage(fullMessage, this._url.origin)).catch(() => { return })
 		return channel.promise
 	}
 }
