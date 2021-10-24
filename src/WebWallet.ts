@@ -1,10 +1,20 @@
 import type Transaction from 'arweave/web/lib/transaction'
 import Emitter from './Emitter'
 
+type ChannelController = {
+	window?: Window | null,
+	promise?: Promise<unknown> | null,
+	resolve?: ((value?: unknown) => void) | null,
+	reject?: ((value?: unknown) => void) | null,
+}
+
+
+
 export class WebWallet extends Emitter {
 	private _url: URL
-	private _iframe: HTMLIFrameElement | null | undefined
-	private _popup: Window | null | undefined
+	private _iframeEl: HTMLIFrameElement | null | undefined
+	private _iframe: ChannelController = {}
+	private _popup: ChannelController = {}
 	private _usePopup: Boolean = true
 	private _keepPopup: Boolean = false
 	private _address: string | null | undefined
@@ -28,16 +38,20 @@ export class WebWallet extends Emitter {
 	private listener = (e: MessageEvent) => {
 		const { method, params, id, result, error } = e.data
 		if (
-			e.source !== this._popup && e.source !== this._iframe?.contentWindow
+			e.source !== this._popup.window && e.source !== this._iframe?.window
 			|| e.origin !== this._url.origin
 		) { return }
-		console.info(`WalletConnector:${e.source === this._popup ? 'popup' : 'iframe'}`, e.data)
+		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
 		if (typeof id === 'number') {
 			if (!this._promiseController[id]) { throw 'received result to nonexistent request' }
 			if (error) { this._promiseController[id].reject(error) }
 			if (result) { this._promiseController[id].resolve(result) }
 		}
 		if (typeof method !== 'string') { return }
+		if (method === 'ready') {
+			if (e.source === this._popup.window) { this._popup.resolve?.() }
+			if (e.source === this._iframe?.window) { this._iframe.resolve?.() }
+		}
 		if (method === 'connect') {
 			const address = params
 			if (typeof address !== 'string' || this._address === address) { return }
@@ -62,27 +76,13 @@ export class WebWallet extends Emitter {
 			window.addEventListener('message', this.listener)
 			this._listening = true
 		}
-		if (!this._iframe) {
-			window.name = 'parent'
-			this._iframe = document.createElement('iframe')
-			this._iframe.src = this._url.toString()
-			this._iframe.style.display = 'none'
-			if (document.readyState === 'complete' || document.readyState === 'interactive') {
-				document.body.appendChild(this._iframe as Node)
-			} else {
-				document.addEventListener('DOMContentLoaded', () => document.body.appendChild(this._iframe as Node))
-			}
-		}
+		this.openIframe()
 		this.openPopup()
 		return new Promise(resolve => this.once('connect', resolve))
 	}
 
 	disconnect() {
-		if (this._iframe) {
-			this._iframe.src = 'about:blank'
-			this._iframe.remove()
-			this._iframe = null
-		}
+		this.closeIframe()
 		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
 		this._listening = false
@@ -115,29 +115,64 @@ export class WebWallet extends Emitter {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
 		const fullMessage = { ...message, id }
-		this.deliverMessage(this._iframe?.contentWindow, fullMessage)
+		this.deliverMessage(this._iframe, fullMessage)
 		this.openPopup(fullMessage)
 		// popup should ask to be kept open
-		promise.then(() => this.closePopup()).catch(() => this.closePopup())
+		promise.finally(() => this.closePopup())
 		return promise
 	}
 
-	private openPopup(fullMessage?: object) {
-		if ((!this._popup || this._popup?.closed) && this._usePopup) {
-			this._popup = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
+	private async openIframe() {
+		if (this._iframeEl) { return }
+		this._iframeEl = document.createElement('iframe')
+		this._iframeEl.src = this._url.toString()
+		this._iframeEl.style.display = 'none'
+		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
+		this._iframe.promise = promise
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			document.body.appendChild(this._iframeEl as Node)
+			this._iframe.window = this._iframeEl?.contentWindow
+		} else {
+			document.addEventListener('DOMContentLoaded', () => {
+				document.body.appendChild(this._iframeEl as Node)
+				this._iframe.window = this._iframeEl?.contentWindow
+			})
 		}
-		if (fullMessage) { this.deliverMessage(this._popup, fullMessage) }
+		return promise
+	}
+
+	private closeIframe() {
+		if (!this._iframeEl) { return }
+		this._iframeEl.src = 'about:blank'
+		this._iframeEl.remove()
+		this._iframeEl = null
+		this._iframe.reject?.()
+		this._iframe = {}
+	}
+
+	private async openPopup(fullMessage?: object) {
+		if (this._popup.window && !this._popup.window?.closed) { return this.deliverMessage(this._popup, fullMessage) }
+		if (!this._usePopup) { return this._popup.promise }
+		window.name = 'parent'
+		const popupWindow = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=400,height=600')
+		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
+		this._popup.promise = promise
+		return this.deliverMessage(this._popup, fullMessage)
 	}
 
 	private closePopup(force?: Boolean) {
-		if ((!this._popup || this._popup?.closed) || this._keepPopup) { return }
-		this._popup.location.href = 'about:blank'
-		this._popup.close()
+		if (!this._popup.window || this._popup.window?.closed) { return }
+		if (this._keepPopup && !force) { return }
+		this._popup.window.location.href = 'about:blank'
+		this._popup.window.close()
+		this._popup.reject?.()
+		this._popup = {}
 	}
 
-	private async deliverMessage(window: Window | null | undefined, fullMessage: Object) {
-		if (!window) { return }
-		// await ready, popup might get closed before ready, cancel if so
-		window.postMessage(fullMessage, this._url.origin)
+	private async deliverMessage(channel: ChannelController, fullMessage?: Object) {
+		if (!channel.promise) { return }
+		if (!fullMessage) { return channel.promise }
+		channel.promise = channel.promise.then(() => channel.window?.postMessage(fullMessage, this._url.origin))
+		return channel.promise
 	}
 }
