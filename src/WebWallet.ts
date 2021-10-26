@@ -37,46 +37,46 @@ export class WebWallet extends Emitter {
 
 	private listener = (e: MessageEvent) => {
 		const { method, params, id, result, error } = e.data
-		if (
-			e.source !== this._popup.window && e.source !== this._iframe?.window
-			|| e.origin !== this._url.origin
-		) { return }
+		if (e.source !== this._popup.window && e.source !== this._iframe?.window || e.origin !== this._url.origin) { return }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
 		if (typeof id === 'number') {
 			if (!this._promiseController[id]) { throw 'received result to nonexistent request' }
 			if (error) { this._promiseController[id].reject(error) }
 			if (result) { this._promiseController[id].resolve(result) }
+			return
 		}
 		if (typeof method !== 'string') { return }
+
 		if (method === 'ready') {
 			if (e.source === this._popup.window) { this._popup.resolve?.() }
 			if (e.source === this._iframe?.window) { this._iframe.resolve?.() }
+			return
 		}
 		if (method === 'connect') {
-			const address = params
-			if (typeof address !== 'string' || this._address === address) { return }
-			this._address = address
-			this.emit('connect', this._address)
+			if (typeof params !== 'string' || this._address === params) { return }
+			this._address = params
 		}
-		if (method === 'disconnect') { this.disconnect() }
+		if (method === 'disconnect') {
+			if (params) { return }
+			this.disconnect()
+		}
 		if (method === 'usePopup') {
-			const use = params
-			if (typeof use !== 'boolean') { return }
-			this._usePopup = use
+			if (typeof params !== 'boolean') { return }
+			this._usePopup = params
 		}
 		if (method === 'keepPopup') {
-			const keep = params
-			if (typeof keep !== 'boolean') { return }
-			this._keepPopup = keep
+			if (typeof params !== 'boolean') { return }
+			this._keepPopup = params
 		}
+		this.emit(method, params)
 	}
 
-	async connect(): Promise<string | undefined> {
-		if (this._listening) { return this._address }
-		window.addEventListener('message', this.listener)
+	async connect(): Promise<string> {
+		if (!this._listening) { window.addEventListener('message', this.listener) }
 		this._listening = true
 		this.openIframe()
 		this.openPopup()
+		if (this._address) { return this._address }
 		return new Promise(resolve => this.once('connect', resolve))
 	}
 
@@ -96,7 +96,7 @@ export class WebWallet extends Emitter {
 	async signTransaction(tx: Transaction) {
 		const res = await this.postMessage({
 			method: 'signTransaction',
-			params: JSON.stringify(tx)
+			params: tx
 		})
 	}
 
@@ -128,15 +128,12 @@ export class WebWallet extends Emitter {
 		this._iframeEl.style.display = 'none'
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
 		this._iframe.promise = promise
-		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+		const injectIframe = () => {
 			document.body.appendChild(this._iframeEl as Node)
 			this._iframe.window = this._iframeEl?.contentWindow
-		} else {
-			document.addEventListener('DOMContentLoaded', () => {
-				document.body.appendChild(this._iframeEl as Node)
-				this._iframe.window = this._iframeEl?.contentWindow
-			})
 		}
+		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() } 
+		else { document.addEventListener('DOMContentLoaded', injectIframe) }
 		return promise
 	}
 
@@ -153,7 +150,7 @@ export class WebWallet extends Emitter {
 		if (this._popup.window && !this._popup.window?.closed) { return this.deliverMessage(this._popup, fullMessage) }
 		if (!this._usePopup) { return this._popup.promise }
 		window.name = 'parent'
-		const popupWindow = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=400,height=600')
+		const popupWindow = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
 		this._popup.promise = promise
 		return this.deliverMessage(this._popup, fullMessage)

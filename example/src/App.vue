@@ -23,7 +23,7 @@ export default defineComponent({
 	components: { ArweaveOutlineLogo, WalletSelector },
 	setup() {
 		const data = reactive({
-			address: undefined as undefined | null | string,
+			address: undefined as undefined | string,
 			loading: false,
 			error: '',
 		})
@@ -34,15 +34,13 @@ export default defineComponent({
 		const connectConnector = async (url: string) => {
 			if (wallet) return
 			wallet = new WebWallet(url, { name: 'Connector Example', logo: `${location.href}placeholder.svg` })
-			wallet.on('connect', (address) => {
+			const walletChange = (address?: string) => {
 				data.loading = false
 				data.address = address
-			})
-			wallet.on('disconnect', () => {
-				data.loading = false
-				data.address = null
-				wallet = null
-			})
+				if (!address) { wallet = null }
+			}
+			wallet.on('connect', walletChange)
+			wallet.on('disconnect', walletChange)
 			data.loading = true
 			wallet.connect()
 		}
@@ -55,8 +53,10 @@ export default defineComponent({
 		const signTx = async () => {
 			if (!wallet) return
 			const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
-			const transaction = await arweave.createTransaction({ data: 'hello' })
-			wallet.signTransaction(transaction)
+			try {
+				const transaction = await arweave.createTransaction({ data: 'hello' })
+				await wallet.signTransaction(transaction)
+			} catch (e) { console.log(e) }
 		}
 
 		return { data, connectConnector, disconnectConnector, signTx }
