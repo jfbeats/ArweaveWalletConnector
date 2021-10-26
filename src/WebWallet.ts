@@ -28,12 +28,17 @@ export class WebWallet extends Emitter {
 		super()
 		this._url = new URL(url.includes('://') ? url : 'https://' + url)
 		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...appInfo, session: Math.random().toString().slice(2) }).toString()
+		this.openIframe()
 	}
 
 	get address() { return this._address }
 	get connected() { return !!this._address }
-
-
+	get keepPopup() { return this._keepPopup }
+	set keepPopup(keep: Boolean) {
+		this._keepPopup = keep
+		if (keep) { this.openPopup() }
+		else { this.closePopup() }
+	}
 
 	private listener = (e: MessageEvent) => {
 		const { method, params, id, result, error } = e.data
@@ -49,7 +54,7 @@ export class WebWallet extends Emitter {
 
 		if (method === 'ready') {
 			if (e.source === this._popup.window) { this._popup.resolve?.() }
-			if (e.source === this._iframe?.window) { this._iframe.resolve?.() }
+			if (e.source === this._iframe.window) { this._iframe.resolve?.() }
 			return
 		}
 		if (method === 'connect') {
@@ -67,17 +72,17 @@ export class WebWallet extends Emitter {
 		if (method === 'keepPopup') {
 			if (typeof params !== 'boolean') { return }
 			this._keepPopup = params
+			if (!params) { this.closePopup() }
 		}
 		this.emit(method, params)
 	}
 
-	async connect(): Promise<string> {
+	async connect(address?: string): Promise<string> {
 		if (!this._listening) { window.addEventListener('message', this.listener) }
 		this._listening = true
 		this.openIframe()
-		this.openPopup()
-		if (this._address) { return this._address }
-		return new Promise(resolve => this.once('connect', resolve))
+		this.postMessage({ connect: address })
+		return new Promise<string>(resolve => this.once('connect', resolve)).finally(() => this.closePopup())
 	}
 
 	disconnect() {
@@ -86,7 +91,7 @@ export class WebWallet extends Emitter {
 		window.removeEventListener('message', this.listener)
 		this._listening = false
 		this._address = undefined
-		this.emit('disconnect')
+		this.emit('disconnect', undefined)
 	}
 
 	async getPublicKey() { }
@@ -104,20 +109,13 @@ export class WebWallet extends Emitter {
 
 	async decrypt() { }
 
-	keepPopup(keep: Boolean) {
-		this._keepPopup = keep
-		if (keep) { this.openPopup() }
-		else { this.closePopup() }
-	}
-
 	postMessage(message: object) {
 		const id = this._promiseController.length
-		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
+		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject })).finally(() => this.closePopup())
 		const fullMessage = { ...message, id }
 		this.deliverMessage(this._iframe, fullMessage)
-		this.openPopup(fullMessage)
-		// popup should ask to be kept open
-		promise.finally(() => this.closePopup())
+		this.openPopup()
+		this.deliverMessage(this._popup, fullMessage)
 		return promise
 	}
 
@@ -132,7 +130,7 @@ export class WebWallet extends Emitter {
 			document.body.appendChild(this._iframeEl as Node)
 			this._iframe.window = this._iframeEl?.contentWindow
 		}
-		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() } 
+		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
 		else { document.addEventListener('DOMContentLoaded', injectIframe) }
 		return promise
 	}
@@ -146,14 +144,13 @@ export class WebWallet extends Emitter {
 		this._iframe = {}
 	}
 
-	private async openPopup(fullMessage?: object) {
-		if (this._popup.window && !this._popup.window?.closed) { return this.deliverMessage(this._popup, fullMessage) }
-		if (!this._usePopup) { return this._popup.promise }
+	private async openPopup() {
+		if (this._popup.window && !this._popup.window.closed || !this._usePopup) { return this._popup.promise }
 		window.name = 'parent'
 		const popupWindow = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
 		this._popup.promise = promise
-		return this.deliverMessage(this._popup, fullMessage)
+		return this._popup.promise
 	}
 
 	private closePopup(force?: Boolean) {
