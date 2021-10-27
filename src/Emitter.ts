@@ -3,6 +3,7 @@ import mitt from 'mitt'
 type Map = {
 	connect: string
 	disconnect: undefined
+	change?: string
 	usePopup: boolean
 	keepPopup: boolean
 }

@@ -1,9 +1,9 @@
 <template>
 	<div class="app">
 		<ArweaveOutlineLogo class="logo" />
-		<WalletSelector @connect="connectConnector" @disconnect="disconnectConnector" :loading="data.loading" :connected="!!data.address" />
-		<div>{{ data.address }}</div>
-		<button v-if="data.address" @click="signTx">Sign Transaction</button>
+		<WalletSelector />
+		<div v-if="walletData.address">{{ walletData.address }}</div>
+		<button v-if="walletData.address" @click="signTransaction">Sign Transaction</button>
 	</div>
 </template>
 
@@ -12,54 +12,26 @@
 <script lang="ts">
 import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
 import WalletSelector from './components/WalletSelector.vue'
-import { defineComponent, reactive } from 'vue'
+import { defineComponent } from 'vue'
 import Arweave from 'arweave'
 
-// Import the wallet connector
-import { WebWallet } from 'arweave-wallet-connector'
+// import from a wrapper initializing the wallet and providing a managed reactive data source along with it
+import { wallet, walletData } from './ReactiveWallet'
 
 export default defineComponent({
 	name: 'App',
 	components: { ArweaveOutlineLogo, WalletSelector },
 	setup() {
-		const data = reactive({
-			address: undefined as undefined | string,
-			loading: false,
-			error: '',
-		})
 
-		let wallet: WebWallet | null = null
-
-		// Initialize the wallet from user submitted URL or preselected options
-		const connectConnector = async (url: string) => {
-			if (wallet) return
-			wallet = new WebWallet(url, { name: 'Connector Example', logo: `${location.href}placeholder.svg` })
-			const walletChange = (address?: string) => {
-				data.loading = false
-				data.address = address
-				if (!address) { wallet = null }
-			}
-			wallet.on('connect', walletChange)
-			wallet.on('disconnect', walletChange)
-			data.loading = true
-			wallet.connect()
-		}
-
-		const disconnectConnector = async () => {
-			await wallet?.disconnect()
-			wallet = null
-		}
-
-		const signTx = async () => {
-			if (!wallet) return
+		const signTransaction = async () => {
 			const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 			try {
 				const transaction = await arweave.createTransaction({ data: 'hello' })
 				await wallet.signTransaction(transaction)
-			} catch (e) { console.log(e) }
+			} catch (e) { walletData.error = e as string }
 		}
 
-		return { data, connectConnector, disconnectConnector, signTx }
+		return { walletData, signTransaction }
 	},
 })
 </script>
@@ -68,15 +40,14 @@ export default defineComponent({
 
 <style scoped>
 .app {
-	--spacing: 80px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: var(--spacing);
+	padding: 80px;
 }
 
 .app > * + * {
-	margin-block-start: var(--spacing);
+	margin-block-start: 80px;
 }
 
 .logo {
@@ -102,6 +73,7 @@ button {
 <style>
 html {
 	background: #111;
+	box-sizing: border-box;
 }
 
 body {
@@ -115,5 +87,11 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	text-align: center;
 	color: #ddd;
+}
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
 }
 </style>
