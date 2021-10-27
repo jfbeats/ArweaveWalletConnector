@@ -159,7 +159,7 @@ export default class Bridge extends Emitter {
 		this._popup.promise = promise
 		const timer = setInterval(() => {
 			if (this._popup.window && !this._popup.window.closed) { return }
-			this.keepPopup = false
+			if (this.keepPopup) { this.keepPopup = false }
 			clearInterval(timer)
 		}, 1000)
 		return this._popup.promise
