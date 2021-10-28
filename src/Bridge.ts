@@ -161,7 +161,7 @@ export default class Bridge extends Emitter {
 			if (this._popup.window && !this._popup.window.closed) { return }
 			if (this.keepPopup) { this.keepPopup = false }
 			clearInterval(timer)
-		}, 1000)
+		}, 200)
 		return this._popup.promise
 	}
 
