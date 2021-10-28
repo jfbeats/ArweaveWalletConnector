@@ -42,7 +42,7 @@ export default class Bridge extends Emitter {
 	get address() { return this._address }
 	get connected() { return !!this._address }
 	get url() { return this._url?.origin }
-	get usePopup() { return this._usePopup}
+	get usePopup() { return this._usePopup }
 	get keepPopup() { return this._keepPopup }
 	set keepPopup(keep: boolean) {
 		this._keepPopup = keep
