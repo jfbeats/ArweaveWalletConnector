@@ -16,8 +16,14 @@ export default class Emitter {
 	protected emit<T extends string>(method: T, params: Params<T>) { this.emitter.emit(method as any, params) }
 	on<T extends string>(method: T, handler: Handler<T>) { this.emitter.on(method as any, handler) }
 	off<T extends string>(method: T, handler: Handler<T>) { this.emitter.off(method as any, handler) }
-	once<T extends string>(method: T, handler: Handler<T>) {
-		const wrapper: Handler<T> = (params) => { this.off(method, wrapper); handler(params) }
-		this.on(method, wrapper)
+	once<T extends string>(method: T, handler?: Handler<T>) {
+		return new Promise(resolve => {
+			const wrapper: Handler<T> = (e) => { 
+				this.off(method, wrapper) 
+				resolve(e)
+				if (handler) { handler(e) }
+			}
+			this.on(method, wrapper)
+		})
 	}
 }
