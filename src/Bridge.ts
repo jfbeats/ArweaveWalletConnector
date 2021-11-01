@@ -34,9 +34,9 @@ export default class Bridge extends Emitter {
 		this.disconnect()
 		this._url = typeof connectToUrl === 'string' ? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl) : connectToUrl
 		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...this._appInfo, session: Math.random().toString().slice(2) }).toString()
-		this.openIframe()
-		window.addEventListener('message', this.listener)
+		if (!this._listening) { window.addEventListener('message', this.listener) }
 		this._listening = true
+		this.openIframe()
 	}
 
 	get address() { return this._address }
@@ -57,7 +57,7 @@ export default class Bridge extends Emitter {
 		const { method, params, id, result, error } = e.data
 		if (e.source !== this._popup.window && e.source !== this._iframe?.window || e.origin !== this._url?.origin) { return }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
-		if (id) {
+		if (id != null) {
 			if (typeof id !== 'number') { return }
 			if (!this._promiseController[id]) { throw 'received result to nonexistent request' }
 			if (error) { this._promiseController[id].reject(error) }
@@ -97,12 +97,12 @@ export default class Bridge extends Emitter {
 		this.emit(method, params)
 	}
 
-	async connect(address?: string): Promise<string> {
-		if (!this._listening) { window.addEventListener('message', this.listener) }
-		this._listening = true
-		this.openIframe()
-		this.postMessage({ connect: address })
-		return new Promise<string>(resolve => this.once('connect', resolve)).finally(() => this.closePopup())
+	connect(address?: string): Promise<string> {
+		const queueLength = this._promiseController.length
+		const promise = new Promise<string>(resolve => this.once('connect', resolve))
+			.finally(() => queueLength === this._promiseController.length && this.closePopup())
+		this.deliverMessage({ connect: address })
+		return promise
 	}
 
 	disconnect() {
@@ -115,17 +115,14 @@ export default class Bridge extends Emitter {
 	}
 
 	postMessage(message: object) {
-		if (!this._url) { throw 'Missing URL' }
 		const id = this._promiseController.length
-		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject })).finally(() => this.closePopup())
-		const fullMessage = { ...message, id }
-		this.deliverMessage(this._iframe, fullMessage)
-		this.openPopup()
-		this.deliverMessage(this._popup, fullMessage)
+		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
+			.finally(() => (id === this._promiseController.length - 1) && this.closePopup())
+		this.deliverMessage({ ...message, id })
 		return promise
 	}
 
-	private async openIframe() {
+	private openIframe() {
 		if (this._iframeEl) { return }
 		this._iframeEl = document.createElement('iframe')
 		this._iframeEl.src = this._url!.toString()
@@ -138,7 +135,6 @@ export default class Bridge extends Emitter {
 		}
 		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
 		else { document.addEventListener('DOMContentLoaded', injectIframe) }
-		return promise
 	}
 
 	private closeIframe() {
@@ -150,9 +146,9 @@ export default class Bridge extends Emitter {
 		this._iframe = {}
 	}
 
-	private async openPopup(force?: boolean) {
-		if (this._popup.window && !this._popup.window.closed) { return this._popup.promise }
-		if (!this._usePopup && !force) { return this._popup.promise }
+	private openPopup(force?: boolean) {
+		if (this._popup.window && !this._popup.window.closed) { this._popup.window.focus(); return }
+		if (!this._usePopup && !force) { return }
 		window.name = 'parent'
 		const popupWindow = window.open(this._url!.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
 		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
@@ -162,7 +158,6 @@ export default class Bridge extends Emitter {
 			if (this.keepPopup) { this.keepPopup = false }
 			clearInterval(timer)
 		}, 200)
-		return this._popup.promise
 	}
 
 	private closePopup(force?: boolean) {
@@ -174,10 +169,11 @@ export default class Bridge extends Emitter {
 		this._popup = {}
 	}
 
-	private async deliverMessage(channel: ChannelController, fullMessage?: Object) {
-		if (!channel.promise) { return }
-		if (!fullMessage) { return channel.promise }
-		channel.promise = channel.promise.then(() => channel.window?.postMessage(fullMessage, this._url!.origin)).catch(() => { return })
-		return channel.promise
+	private deliverMessage(fullMessage: Object) {
+		if (!this._url) { throw 'Missing URL' }
+		this.openIframe()
+		this._iframe.promise = this._iframe.promise!.then(() => this._iframe.window?.postMessage(fullMessage, this._url!.origin)).catch(() => { return })
+		this.openPopup()
+		this._popup.promise = this._popup.promise!.then(() => this._popup.window?.postMessage(fullMessage, this._url!.origin)).catch(() => { return })
 	}
 }
