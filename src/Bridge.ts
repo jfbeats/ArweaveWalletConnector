@@ -150,7 +150,7 @@ export default class Bridge extends Emitter {
 		if (this._popup.window && !this._popup.window.closed) { this._popup.window.focus(); return }
 		if (!this._usePopup && !force) { return }
 		window.name = 'parent'
-		const popupWindow = window.open(this._url!.toString(), '_blank', 'location,resizable,scrollbars,width=360,height=600')
+		const popupWindow = window.open(this._url!.toString(), '_blank', 'location,resizable,scrollbars,width=400,height=600')
 		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
 		this._popup.promise = promise
 		const timer = setInterval(() => {
