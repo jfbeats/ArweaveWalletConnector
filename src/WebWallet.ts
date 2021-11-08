@@ -4,7 +4,7 @@ import Bridge from './Bridge'
 
 
 export class WebWallet extends Bridge {
-	constructor(appInfo: { name: string, logo: string }, url?: string,) {
+	constructor(appInfo?: { name: string, logo: string }, url?: string,) {
 		super({ ...appInfo, app: 'arweave' }, url)
 	}
 

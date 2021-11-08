@@ -11,7 +11,7 @@ type ChannelController = {
 
 export default class Bridge extends Emitter {
 	private _url?: URL
-	private _appInfo: object
+	private _appInfo?: object
 	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
 	private _popup: ChannelController = {}
@@ -24,7 +24,7 @@ export default class Bridge extends Emitter {
 		reject: (reason?: Error) => void
 	}[] = []
 
-	constructor(appInfo: object, connectToUrl?: string | URL) {
+	constructor(appInfo?: object, connectToUrl?: string | URL) {
 		super()
 		this._appInfo = appInfo
 		if (connectToUrl) { this.setUrl(connectToUrl) }
@@ -98,6 +98,7 @@ export default class Bridge extends Emitter {
 	}
 
 	connect(address?: string): Promise<string> {
+		// connect(permissions)
 		const queueLength = this._promiseController.length
 		const promise = new Promise<string>(resolve => this.once('connect', resolve))
 			.finally(() => queueLength === this._promiseController.length && this.closePopup())
