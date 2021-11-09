@@ -14,6 +14,7 @@ export default class Bridge extends Emitter {
 	private _appInfo?: object
 	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
+	private _showIframe: boolean = false
 	private _popup: ChannelController = {}
 	private _usePopup: boolean = true
 	private _keepPopup: boolean = false

@@ -1,5 +1,5 @@
 // Import the wallet connector
-import { WebWallet } from 'arweave-wallet-connector'
+import { ArweaveWebWallet } from 'arweave-wallet-connector'
 import { reactive } from 'vue'
 
 // Reactive data about the connection
@@ -11,7 +11,7 @@ export const walletData = reactive({
 })
 
 // Initialize the wallet providing the current app info
-export const wallet = new WebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` })
+export const wallet = new ArweaveWebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` })
 wallet.on('connect', (address) => {
 	walletData.address = address
 	walletData.url = wallet.url as string

@@ -1,1 +1,1 @@
-export { WebWallet } from './WebWallet'
+export { ArweaveWebWallet } from './ArweaveWebWallet'
