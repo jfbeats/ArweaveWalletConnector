@@ -1,5 +1,11 @@
 {
 	"compilerOptions": {
+		"plugins": [
+			{
+				"transform": "typescript-is/lib/transform-inline/transformer",
+				"functionBehavior": "basic"
+			}
+		],
 		"module": "esnext",
 		"outDir": "dist",
 		"target": "esnext",
@@ -10,7 +16,10 @@
 		"esModuleInterop": true,
 		"isolatedModules": true,
 		"inlineSourceMap": false,
-		"lib": [ "esnext", "dom" ],
+		"lib": [
+			"esnext",
+			"dom"
+		],
 		"listEmittedFiles": false,
 		"listFiles": false,
 		"moduleResolution": "node",
