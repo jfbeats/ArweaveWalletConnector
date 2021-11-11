@@ -19,16 +19,17 @@ export class ArweaveWebWallet extends Bridge {
 		return res
 	}
 
-	async getArweaveConfig(): Promise<ApiConfig> {
-		const res = await this.postMessage({ method: 'getArweaveConfig' })
+	async getArweaveConfig(tx?: Transaction | SerializedUploader | string): Promise<ApiConfig> {
+		const res = await this.postMessage({ method: 'getArweaveConfig', params: tx })
 		type ReceivedApiConfig = Omit<ApiConfig, 'logger'> & { logger: any }
 		if (!is<ReceivedApiConfig>(res)) { throw 'TypeError' }
 		delete res.logger
 		return res
 	}
 
-	async signTransaction(tx: Transaction): Promise<Transaction> {
-		const res = await this.postMessage({ method: 'signTransaction', params: tx })
+	async signTransaction(tx: Transaction, options: object): Promise<Transaction> {
+		const { data, ...txHeader } = tx
+		const res = await this.postMessage({ method: 'signTransaction', params: { txHeader, options } })
 		if (!is<{ signature: string, fee?: string }>(res)) { throw 'TypeError' }
 		tx.signature = res.signature
 		if (res.fee) { tx.fee = res.fee } // todo only if not bundle data transaction?
@@ -36,12 +37,20 @@ export class ArweaveWebWallet extends Bridge {
 	}
 
 	async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
-		const api = await this.getArweaveConfig()
-		const arweave = Arweave.init(api)
-		return arweave.transactions.getUploader(tx, data)
+		const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
+		const arweave = Arweave.init(api) // init arweave instance to that endpoint
+		return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
 	}
 
-	async sign(): Promise<string> { throw '' }
+	async sign(message: string, options: object): Promise<string> {
+		const res = await this.postMessage({ method: '', params: { message, options } })
+		if (!is<string>(res)) { throw 'TypeError' }
+		return res
+	}
 
-	async decrypt(): Promise<string> { throw '' }
+	async decrypt(message: string, options: object): Promise<string> {
+		const res = await this.postMessage({ method: '', params: { message, options } })
+		if (!is<string>(res)) { throw 'TypeError' }
+		return res
+	}
 }
