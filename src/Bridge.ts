@@ -120,7 +120,7 @@ export default class Bridge extends Emitter {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
 			.finally(() => (id === this._promiseController.length - 1) && this.closePopup())
-		this.deliverMessage({ ...message, id })
+		this.deliverMessage({ ...message, jsonrpc: '2.0', id })
 		return promise
 	}
 
