@@ -27,7 +27,7 @@ export class ArweaveWebWallet extends Bridge {
 		return res
 	}
 
-	async signTransaction(tx: Transaction, options: object): Promise<Transaction> {
+	async signTransaction(tx: Transaction, options?: object): Promise<Transaction> {
 		const { data, ...txHeader } = tx
 		const res = await this.postMessage({ method: 'signTransaction', params: { txHeader, options } })
 		if (!is<{ signature: string, fee?: string }>(res)) { throw 'TypeError' }
@@ -42,13 +42,13 @@ export class ArweaveWebWallet extends Bridge {
 		return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
 	}
 
-	async sign(message: string, options: object): Promise<string> {
+	async sign(message: string, options?: object): Promise<string> {
 		const res = await this.postMessage({ method: '', params: { message, options } })
 		if (!is<string>(res)) { throw 'TypeError' }
 		return res
 	}
 
-	async decrypt(message: string, options: object): Promise<string> {
+	async decrypt(message: string, options?: object): Promise<string> {
 		const res = await this.postMessage({ method: '', params: { message, options } })
 		if (!is<string>(res)) { throw 'TypeError' }
 		return res
