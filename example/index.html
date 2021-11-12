@@ -12,6 +12,19 @@
 			window.global = window
 			window.Buffer = Buffer
 		}
+		const faviconEl = document.createElement('link')
+		faviconEl.setAttribute('rel', 'favicon icon')
+		const setFavicon = (e) => {
+			faviconEl.remove()
+			if (e.matches) { faviconEl.setAttribute('href', 'plugLightTheme.svg') }
+			else { faviconEl.setAttribute('href', 'plug.svg') }
+			document.head.appendChild(faviconEl)
+		}
+		if (window.matchMedia) {
+			const matchTheme = window.matchMedia('(prefers-color-scheme: light)')
+			matchTheme.addEventListener('change', setFavicon)
+			setFavicon(matchTheme)
+		} else { setFavicon({ matches: false }) }
 	</script>
 </head>
 
