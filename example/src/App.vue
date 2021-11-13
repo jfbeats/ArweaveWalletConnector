@@ -26,7 +26,11 @@ export default defineComponent({
 		const signTransaction = async () => {
 			const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 			try {
-				const transaction = await arweave.createTransaction({ data: 'hello' })
+				const transaction = await arweave.createTransaction({
+					owner: walletData.address,
+					data: 'hello world',
+				})
+				transaction.addTag('tag1', 'tags are displayed here')
 				await wallet.signTransaction(transaction)
 			} catch (e) { walletData.error = e as string }
 		}

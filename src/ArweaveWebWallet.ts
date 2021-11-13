@@ -28,8 +28,8 @@ export class ArweaveWebWallet extends Bridge {
 	}
 
 	async signTransaction(tx: Transaction, options?: object): Promise<Transaction> {
-		const { data, ...txHeader } = tx
-		const res = await this.postMessage({ method: 'signTransaction', params: { txHeader, options } })
+		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
+		const res = await this.postMessage({ method: 'signTransaction', params: { tx: txHeader, options } })
 		if (!is<{ signature: string, fee?: string }>(res)) { throw 'TypeError' }
 		tx.signature = res.signature
 		if (res.fee) { tx.fee = res.fee } // todo only if not bundle data transaction?
