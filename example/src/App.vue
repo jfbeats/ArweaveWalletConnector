@@ -27,10 +27,15 @@ export default defineComponent({
 			const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 			try {
 				const transaction = await arweave.createTransaction({
+					quantity: '100000000000',
 					owner: walletData.address,
+					target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
 					data: 'hello world',
 				})
-				transaction.addTag('tag1', 'tags are displayed here')
+				transaction.addTag('App-Name', 'Donate to the developer')
+				transaction.addTag('Tag-1', 'transaction tags are all displayed here')
+				transaction.addTag('Tag-2', 'this is a real transaction')
+				transaction.addTag('Tag-3', 'it will only be sent by clicking accept')
 				await wallet.signTransaction(transaction)
 			} catch (e) { walletData.error = e as string }
 		}
