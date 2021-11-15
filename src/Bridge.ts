@@ -23,6 +23,7 @@ export default class Bridge extends Emitter {
 		resolve: (value?: string) => void,
 		reject: (reason?: Error) => void
 	}[] = []
+	private _pending: number[] = []
 
 	constructor(appInfo?: object, connectToUrl?: string | URL) {
 		super()
@@ -32,8 +33,14 @@ export default class Bridge extends Emitter {
 
 	setUrl(connectToUrl: string | URL) {
 		this.disconnect()
-		this._url = typeof connectToUrl === 'string' ? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl) : connectToUrl
-		this._url.hash = new URLSearchParams({ origin: window.location.origin, ...this._appInfo, session: Math.random().toString().slice(2) }).toString()
+		this._url = typeof connectToUrl === 'string'
+			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
+			: connectToUrl
+		this._url.hash = new URLSearchParams({ 
+			origin: window.location.origin, 
+			...this._appInfo, 
+			session: Math.random().toString().slice(2) 
+		}).toString()
 		if (!this._listening) { window.addEventListener('message', this.listener) }
 		this._listening = true
 		this.openIframe()
@@ -58,17 +65,19 @@ export default class Bridge extends Emitter {
 		if (e.source !== this._popup.window && e.source !== this._iframe?.window || e.origin !== this._url?.origin) { return }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
 		if (id != null) {
-			if (typeof id !== 'number') { return }
-			if (!this._promiseController[id]) { throw 'received result to nonexistent request' }
-			if (error) { this._promiseController[id].reject(error) }
-			if (result) { this._promiseController[id].resolve(result) }
+			if (typeof id !== 'number' && typeof id !== 'string') { return }
+			if (typeof id === 'string' && isNaN(parseInt(id))) { return }
+			if (!this._promiseController[+id]) { throw 'received result to nonexistent request' }
+			this._pending = this._pending.filter(x => x != id)
+			if (error != null) { this._promiseController[+id].reject(error) }
+			if (result != null) { this._promiseController[+id].resolve(result) }
 			return
 		}
 		if (typeof method !== 'string') { return }
 
 		// reserved methods
 		if (method === 'ready') {
-			if (e.source === this._popup.window) { this._popup.resolve?.() }
+			if (e.source === this._popup.window) { this._pending = []; this._popup.resolve?.() }
 			if (e.source === this._iframe.window) { this._iframe.resolve?.() }
 			return
 		}
@@ -99,9 +108,8 @@ export default class Bridge extends Emitter {
 
 	connect(address?: string): Promise<string> {
 		// connect(permissions)
-		const queueLength = this._promiseController.length
 		const promise = new Promise<string>(resolve => this.once('connect', resolve))
-			.finally(() => queueLength === this._promiseController.length && this.closePopup())
+			.finally(() => !this._pending.length && this.closePopup())
 		this.deliverMessage({ connect: address })
 		return promise
 	}
@@ -118,7 +126,7 @@ export default class Bridge extends Emitter {
 	postMessage(message: object) {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
-			.finally(() => (id === this._promiseController.length - 1) && this.closePopup())
+			.finally(() => !this._pending.length && this.closePopup())
 		this.deliverMessage({ ...message, jsonrpc: '2.0', id })
 		return promise
 	}
@@ -174,11 +182,16 @@ export default class Bridge extends Emitter {
 		this._popup = {}
 	}
 
-	private deliverMessage(fullMessage: Object) {
+	private deliverMessage(fullMessage: any) {
 		if (!this._url) { throw 'Missing URL' }
 		this.openIframe()
-		this._iframe.promise = this._iframe.promise!.then(() => this._iframe.window?.postMessage(fullMessage, this._url!.origin)).catch(() => { return })
+		this._iframe.promise = this._iframe.promise!
+			.then(() => this._iframe.window?.postMessage(fullMessage, this._url!.origin))
+			.catch(() => { return })
 		this.openPopup()
-		this._popup.promise = this._popup.promise!.then(() => this._popup.window?.postMessage(fullMessage, this._url!.origin)).catch(() => { return })
+		this._popup.promise = this._popup.promise!
+			.then(() => fullMessage.id != null && this._pending.push(fullMessage.id))
+			.then(() => this._popup.window?.postMessage(fullMessage, this._url!.origin))
+			.catch(() => { return })
 	}
 }

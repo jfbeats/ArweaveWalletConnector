@@ -37,7 +37,7 @@ export default defineComponent({
 				transaction.addTag('Tag-2', 'this is a real transaction')
 				transaction.addTag('Tag-3', 'it will only be sent by clicking accept')
 				await wallet.signTransaction(transaction)
-			} catch (e) { walletData.error = e as string }
+			} catch (e) { console.error(e); walletData.error = e as string }
 		}
 
 		return { walletData, signTransaction }

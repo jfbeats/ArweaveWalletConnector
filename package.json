@@ -11,7 +11,8 @@
 	],
 	"scripts": {
 		"build": "ttsc",
-		"prepare": "npm run build"
+		"prepare": "npm run build",
+		"dev": "npm run build && cd example && npm run dev"
 	},
 	"license": "ISC",
 	"dependencies": {
