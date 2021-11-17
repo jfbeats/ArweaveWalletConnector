@@ -14,7 +14,7 @@ type EmitterMap = {
 }
 
 export default class Connector<ProtocolMap extends Record<string, unknown>> extends Emitter<Flatten<ProtocolMap & EmitterMap>> {
-	private static _bridges: { [url: string]: { bridge: Bridge, count: number } } = {}
+	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
 	private _protocolInfo?: { protocol?: string, version?: string }
 	private _appInfo?: { name?: string, version?: string }
 	private _bridge?: Bridge
@@ -30,6 +30,7 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 		this._listener = (message: BridgeEmitterMap['message']) => {
 			const { method, params, session } = message
 			if (session != null && this._session != session) { return }
+			if (!session && this._session) { return }
 			if (method === 'connect') { typeof params === 'string' && this.emit('connect', params) }
 			if (method === 'disconnect') { this.disconnect() }
 		}
@@ -45,11 +46,13 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 		const url = typeof connectToUrl === 'string' ? connectToUrl : connectToUrl.origin
 		if (!Connector._bridges[url]) {
 			this._bridge = new Bridge(connectToUrl, this._appInfo)
-			Connector._bridges[url] = { bridge: this._bridge, count: 0 }
+			Connector._bridges[url] = { bridge: this._bridge, sessions: [] }
 		} else {
 			this._bridge = Connector._bridges[url].bridge
+			const sessions = Connector._bridges[url].sessions
+			for (let i = 0; i <= sessions.length; i++) { if (sessions.indexOf(i) < 0) { this._session = i; break } }
 		}
-		Connector._bridges[url].count++
+		Connector._bridges[url].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
 		// this._bridge.on('disconnect', () => {
@@ -81,16 +84,17 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 	disconnect(options?: object) {
 		if (!this._bridge) { return }
 		// post message
+		this.emit('disconnect', undefined)
 		this._bridge.off('message', this._listener)
 		this._bridge.off('builtin', this._emitterPassthrough)
 		const url = this._bridge.url
-		Connector._bridges[url].count--
+		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != this._session)
 		this._bridge = undefined
 		setTimeout(() => {
-			if (Connector._bridges[url].count > 0) { return }
+			if (Connector._bridges[url].sessions.length) { return }
 			Connector._bridges[url].bridge.disconnect()
 			delete Connector._bridges[url]
-		}, 1000)
+		}, 100)
 	}
 
 	postMessage(method: string, params?: any) {
