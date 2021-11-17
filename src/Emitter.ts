@@ -1,29 +1,19 @@
 import mitt from 'mitt'
+import { is } from 'typescript-is'
 
-type Map = {
-	connect: string
-	disconnect: undefined
-	change?: string
-	usePopup: boolean
-	keepPopup: boolean
-}
+export default class Emitter<Events extends Record<string, unknown>> {
+	private mittInstance
+	on
+	off
 
-type Params<T extends string> = T extends keyof Map ? Map[T] : unknown | undefined
-type Handler<T extends string> = (params: Params<T>) => void
+	constructor() {
+		this.mittInstance = mitt<Events>()
+		this.on = this.mittInstance.on
+		this.off = this.mittInstance.off
+	}
 
-export default class Emitter {
-	private emitter = mitt<Map>()
-	protected emit<T extends string>(method: T, params: Params<T>) { this.emitter.emit(method as any, params) }
-	on<T extends string>(method: T, handler: Handler<T>) { this.emitter.on(method as any, handler) }
-	off<T extends string>(method: T, handler: Handler<T>) { this.emitter.off(method as any, handler) }
-	once<T extends string>(method: T, handler?: Handler<T>) {
-		return new Promise(resolve => {
-			const wrapper: Handler<T> = (e) => { 
-				this.off(method, wrapper) 
-				resolve(e)
-				if (handler) { handler(e) }
-			}
-			this.on(method, wrapper)
-		})
+	protected emit<Method extends string>(method: Method, params: Events[Method]) {
+		if (!is<Events[Method]>(params)) { return }
+		this.mittInstance.emit(method, params)
 	}
 }
