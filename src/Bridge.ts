@@ -1,3 +1,5 @@
+import { is } from 'typescript-is'
+
 import Emitter from './Emitter'
 
 type ChannelController = {
@@ -7,15 +9,19 @@ type ChannelController = {
 	reject?: (value?: unknown) => void,
 }
 
-type Map = {
+export type EmitterMap = {
 	message: {
-		method: string,
-		params: unknown,
-		session: number | string
+		method: string
+		params: unknown
+		session?: number | string | undefined
+	}
+	builtin: {
+		usePopup?: boolean | undefined
+		keepPopup?: boolean | undefined
 	}
 }
 
-export default class Bridge extends Emitter<Map> {
+export default class Bridge extends Emitter<EmitterMap> {
 	private _url: URL
 	private _appInfo?: object
 	private _iframeEl?: HTMLIFrameElement | null
@@ -25,8 +31,8 @@ export default class Bridge extends Emitter<Map> {
 	private _keepPopup: boolean = false
 	private _listening: boolean = false
 	private _promiseController: {
-		resolve: (value?: string) => void,
-		reject: (reason?: Error) => void
+		resolve: (value?: unknown) => void,
+		reject: (reason?: unknown) => void
 	}[] = []
 	private _pending: number[] = []
 
@@ -51,7 +57,7 @@ export default class Bridge extends Emitter<Map> {
 	get keepPopup() { return this._keepPopup }
 	set keepPopup(keep: boolean) {
 		this._keepPopup = keep
-		this.emit('keepPopup', keep)
+		this.emit('builtin', { keepPopup: keep })
 		if (keep) { this.openPopup(true) }
 		else { this.closePopup() }
 	}
@@ -59,7 +65,8 @@ export default class Bridge extends Emitter<Map> {
 
 
 	private listener = (e: MessageEvent) => {
-		const { method, params, id, result, error, session } = e.data
+		if (typeof e.data !== 'object') { return }
+		const { method, params, id, result, error, session } = e.data as { [key: string]: unknown }
 		if (e.source !== this._popup.window && e.source !== this._iframe?.window || e.origin !== this._url?.origin) { return }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
 		if (id != null) {
@@ -82,16 +89,13 @@ export default class Bridge extends Emitter<Map> {
 		if (method === 'change') { return }
 
 		// verified methods
-		if (method === 'connect') {
-			if (typeof params !== 'string') { return }
-			// this._address = params
-			// this.emit('change', params)
-		}
-		if (method === 'disconnect') {
-			if (params) { return }
-			this.disconnect()
-			// this.emit('change', undefined)
-		}
+		// if (method === 'connect') {
+		// 	if (typeof params !== 'string') { return }
+		// }
+		// if (method === 'disconnect') {
+		// 	if (params) { return }
+		// 	this.disconnect()
+		// }
 		if (method === 'usePopup') {
 			if (typeof params !== 'boolean') { return }
 			this._usePopup = params
@@ -102,16 +106,14 @@ export default class Bridge extends Emitter<Map> {
 			if (!params) { this.closePopup() }
 		}
 		const emitting = { method, params, session }
+		if (!is<EmitterMap['message']>(emitting)) { return console.warn('dropped') }
 		this.emit('message', emitting)
 	}
 
-	connect(options?: object): Promise<string> {
-		// address for autoconnect, permissions suggestions
-		// const promise = new Promise<string>(resolve => this.once('connect', resolve))
-		// 	.finally(() => !this._pending.length && this.closePopup())
-		// this.deliverMessage({ method: 'connect', params: options })
-		// return promise
-	}
+	// connect(options?: object): Promise<string> {
+	// 	// address for autoconnect, permissions suggestions
+
+	// }
 
 	disconnect(options?: object) {
 
@@ -120,7 +122,7 @@ export default class Bridge extends Emitter<Map> {
 		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
 		this._listening = false
-		this.emit('disconnect', undefined)
+		// this.emit('disconnect', undefined)
 	}
 
 	postMessage(message: object) {
@@ -181,6 +183,8 @@ export default class Bridge extends Emitter<Map> {
 		this._popup.reject?.()
 		this._popup = {}
 	}
+
+	completeRequest() { !this._pending.length && this.closePopup() }
 
 	deliverMessage(message: any) {
 		if (!this._url) { throw 'Missing URL' }

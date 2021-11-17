@@ -1,5 +1,4 @@
 import mitt from 'mitt'
-import { is } from 'typescript-is'
 
 export default class Emitter<Events extends Record<string, unknown>> {
 	private mittInstance
@@ -12,8 +11,18 @@ export default class Emitter<Events extends Record<string, unknown>> {
 		this.off = this.mittInstance.off
 	}
 
-	protected emit<Method extends string>(method: Method, params: Events[Method]) {
-		if (!is<Events[Method]>(params)) { return }
+	protected emit<Method extends keyof Events>(method: Method, params: Events[Method]) {
 		this.mittInstance.emit(method, params)
+	}
+
+	once<Method extends keyof Events>(method: Method, handler: (params: Events[Method]) => void) {
+		return new Promise(resolve => {
+			const wrapper: typeof handler = (e) => { 
+				this.off(method, wrapper) 
+				resolve(e)
+				if (handler) { handler(e) }
+			}
+			this.on(method, wrapper)
+		})
 	}
 }

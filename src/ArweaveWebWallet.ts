@@ -6,9 +6,9 @@ import { is } from 'typescript-is'
 
 import Connector from './Connector'
 
-type Map = {}
+type EmitterMap = {}
 
-export class ArweaveWebWallet extends Connector<Map> {
+export class ArweaveWebWallet extends Connector<EmitterMap> {
 	constructor(appInfo?: { name?: string, logo?: string }, url?: string,) {
 		super({ protocol: 'arweave', version: '1.0.0' }, { ...appInfo }, url)
 	}
