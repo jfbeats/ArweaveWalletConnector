@@ -31,10 +31,16 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 			const { method, params, session } = message
 			if (session != null && this._session != session) { return }
 			if (!session && this._session) { return }
-			if (method === 'connect') { typeof params === 'string' && this.emit('connect', params) }
-			if (method === 'disconnect') { this.disconnect() }
+			if (method === 'connect') {
+				if (!is<string>(params)) { return }
+				if (this._address === params) { return }
+				this._address = params
+				this.emit('connect', params)
+				this.emit('change', params)
+			}
+			if (method === 'disconnect') { this.handleDisconnect() }
 		}
-		this._emitterPassthrough = <T extends keyof BridgeEmitterMap['builtin']> (param: BridgeEmitterMap['builtin']) => {
+		this._emitterPassthrough = <T extends keyof BridgeEmitterMap['builtin']>(param: BridgeEmitterMap['builtin']) => {
 			const event = Object.entries(param)[0] as [T, BridgeEmitterMap['builtin'][T]]
 			this.emit(event[0], event[1])
 		}
@@ -55,16 +61,6 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 		Connector._bridges[url].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
-		// this._bridge.on('disconnect', () => {
-		// 	if (this._address === address) { return }
-		// 	this._address = address
-		// 	this.emit('connect', address)
-		// 	this.emit('change', address)
-		// 	if (!this._address) { return }
-		// 	this._address = undefined
-		// 	this.emit('disconnect', undefined)
-		// 	this.emit('change', undefined)
-		// })
 	}
 
 	get address() { return this._address }
@@ -73,7 +69,7 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 	get keepPopup() { return this._bridge?.keepPopup || false }
 	set keepPopup(keep: boolean) { this._bridge && (this._bridge.keepPopup = keep) }
 
-	connect(options?: object): Promise<string> {
+	async connect(options?: object): Promise<string> {
 		if (!this._bridge) { throw 'URL missing' }
 		const promise = new Promise<string>(resolve => this.once('connect', resolve))
 			.finally(() => this._bridge?.completeRequest())
@@ -81,10 +77,18 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 		return promise
 	}
 
-	disconnect(options?: object) {
+	async disconnect(options?: object) {
 		if (!this._bridge) { return }
-		// post message
+		try { await this.postMessage('disconnect', options) } 
+		catch (e) { console.warn('disconnect request failed') }
+		this.handleDisconnect()
+	}
+
+	private handleDisconnect() {
+		this._address = undefined
 		this.emit('disconnect', undefined)
+		this.emit('change', undefined)
+		if (!this._bridge) { return }
 		this._bridge.off('message', this._listener)
 		this._bridge.off('builtin', this._emitterPassthrough)
 		const url = this._bridge.url
