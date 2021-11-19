@@ -1,4 +1,4 @@
-import Arweave from 'arweave'
+// import Arweave from 'arweave'
 import type Transaction from 'arweave/node/lib/transaction'
 import type { ApiConfig } from 'arweave/node/lib/api'
 import type { SerializedUploader, TransactionUploader } from 'arweave/node/lib/transaction-uploader'
@@ -6,9 +6,9 @@ import { is } from 'typescript-is'
 
 import Connector from './Connector'
 
-type EmitterMap = {}
+type Emitting = {}
 
-export class ArweaveWebWallet extends Connector<EmitterMap> {
+export class ArweaveWebWallet extends Connector<Emitting> {
 	constructor(appInfo?: { name?: string, logo?: string }, url?: string,) {
 		super({ protocol: 'arweave', version: '1.0.0' }, { ...appInfo }, url)
 	}
@@ -36,12 +36,12 @@ export class ArweaveWebWallet extends Connector<EmitterMap> {
 		return tx
 	}
 
-	async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
-		// getUploader be a wallet method instead
-		const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
-		const arweave = Arweave.init(api) // init arweave instance to that endpoint
-		return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
-	}
+	// async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
+	// 	// getUploader be a wallet method instead
+	// 	const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
+	// 	const arweave = Arweave.init(api) // init arweave instance to that endpoint
+	// 	return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
+	// }
 
 	async sign(message: string, options?: object): Promise<string> {
 		const res = await this.postMessage('sign', { message, options })

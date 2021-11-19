@@ -3,14 +3,13 @@
 	"version": "0.0.0",
 	"description": "WIP",
 	"type": "module",
-	"module": "./dist/index.js",
-	"main": "./dist/index.js",
-	"exports": "./dist/index.js",
+	"module": "lib/index.js",
+	"main": "lib/index.js",
 	"files": [
-		"dist"
+		"lib/**/*"
 	],
 	"scripts": {
-		"build": "ttsc",
+		"build": "ttsc && node build.js",
 		"prepare": "npm run build",
 		"dev": "npm run build && cd example && npm run dev"
 	},
@@ -21,6 +20,8 @@
 		"typescript-is": "^0.19.0"
 	},
 	"devDependencies": {
+		"esbuild": "^0.13.14",
+		"rimraf": "^3.0.2",
 		"ttypescript": "^1.5.12",
 		"typescript": "^4.4.4"
 	}

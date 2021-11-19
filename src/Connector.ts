@@ -1,19 +1,20 @@
 import { is } from 'typescript-is'
 
 import Emitter from './Emitter'
-import Bridge, { EmitterMap as BridgeEmitterMap } from './Bridge'
+import Bridge, { Emitting as InternalBridgeMap } from './Bridge'
 
 type Flatten<T> = T extends Record<string, any> ? { [k in keyof T]: T[k] } : never
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
 
-type EmitterMap = {
-	[key in keyof BridgeEmitterMap['builtin']]: BridgeEmitterMap['builtin'][key]
-} & {
+type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
+
+type Emitting = BridgeMap & {
 	connect: string
 	disconnect: undefined
 	change: string | undefined
 }
 
-export default class Connector<ProtocolMap extends Record<string, unknown>> extends Emitter<Flatten<ProtocolMap & EmitterMap>> {
+export default class Connector<EmittingMap extends Record<string, unknown>> extends Emitter<Flatten<EmittingMap & Emitting>> {
 	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
 	private _protocolInfo?: { protocol?: string, version?: string }
 	private _appInfo?: { name?: string, version?: string }
@@ -27,7 +28,7 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 		super()
 		this._protocolInfo = protocolInfo
 		this._appInfo = appInfo
-		this._listener = (message: BridgeEmitterMap['message']) => {
+		this._listener = (message: InternalBridgeMap['message']) => {
 			const { method, params, session } = message
 			if (session != null && this._session != session) { return }
 			if (!session && this._session) { return }
@@ -40,8 +41,8 @@ export default class Connector<ProtocolMap extends Record<string, unknown>> exte
 			}
 			if (method === 'disconnect') { this.handleDisconnect() }
 		}
-		this._emitterPassthrough = <T extends keyof BridgeEmitterMap['builtin']>(param: BridgeEmitterMap['builtin']) => {
-			const event = Object.entries(param)[0] as [T, BridgeEmitterMap['builtin'][T]]
+		this._emitterPassthrough = <T extends keyof BridgeMap>(param: InternalBridgeMap['builtin']) => {
+			const event = Object.entries(param)[0] as [T, BridgeMap[T]]
 			this.emit(event[0], event[1])
 		}
 		if (connectToUrl) { this.setUrl(connectToUrl) }

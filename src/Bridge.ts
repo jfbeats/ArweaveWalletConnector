@@ -9,19 +9,17 @@ type ChannelController = {
 	reject?: (value?: unknown) => void,
 }
 
-export type EmitterMap = {
+export type Emitting = {
 	message: {
 		method: string
 		params: unknown
 		session?: number | string | undefined
 	}
-	builtin: {
-		usePopup?: boolean | undefined
-		keepPopup?: boolean | undefined
-	}
+	builtin: { usePopup: boolean }
+	| { keepPopup: boolean }
 }
 
-export default class Bridge extends Emitter<EmitterMap> {
+export default class Bridge extends Emitter<Emitting> {
 	private _url: URL
 	private _appInfo?: object
 	private _iframeEl?: HTMLIFrameElement | null
@@ -106,7 +104,7 @@ export default class Bridge extends Emitter<EmitterMap> {
 			if (!params) { this.closePopup() }
 		}
 		const emitting = { method, params, session }
-		if (!is<EmitterMap['message']>(emitting)) { return console.warn('dropped') }
+		if (!is<Emitting['message']>(emitting)) { return console.warn('dropped') }
 		this.emit('message', emitting)
 	}
 

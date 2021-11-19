@@ -6,13 +6,12 @@
 				"functionBehavior": "basic"
 			}
 		],
-		"module": "esnext",
-		"outDir": "dist",
-		"target": "esnext",
+		"target": "ES6",
+		"module": "ES6",
+		"outDir": "lib",
+		"declaration": true,
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
-		"baseUrl": "src",
-		"declaration": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
 		"inlineSourceMap": false,
@@ -26,7 +25,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"pretty": true,
 		"resolveJsonModule": true,
-		"rootDir": "src",
 		"skipLibCheck": true,
 		"strict": true,
 		"traceResolution": false
@@ -36,6 +34,7 @@
 	],
 	"exclude": [
 		"node_modules",
-		"dist"
+		"dist",
+		"lib"
 	]
 }
