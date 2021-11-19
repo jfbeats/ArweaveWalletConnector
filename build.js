@@ -17,9 +17,9 @@ export const runBuild = async (doClean = false) => {
 		platform: 'browser',
 		target: ['chrome58', 'firefox57', 'safari11', 'edge18'],
 		outfile: './dist/index.js',
-		sourcemap: 'inline'
+		sourcemap: true
 	}).catch((e) => {
-		console.log(e);
+		console.log(e)
 		process.exit(1)
 	})
 
@@ -30,9 +30,9 @@ export const runBuild = async (doClean = false) => {
 		platform: 'browser',
 		target: ['chrome58', 'firefox57', 'safari11', 'edge18'],
 		outfile: './dist/index.min.js',
-		sourcemap: 'inline'
+		sourcemap: true
 	}).catch((e) => {
-		console.log(e);
+		console.log(e)
 		process.exit(1)
 	})
 }
