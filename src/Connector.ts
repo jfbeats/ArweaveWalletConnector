@@ -2,9 +2,7 @@ import { is } from 'typescript-is'
 
 import Emitter from './Emitter'
 import Bridge, { Emitting as InternalBridgeMap } from './Bridge'
-
-type Flatten<T> = T extends Record<string, any> ? { [k in keyof T]: T[k] } : never
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
+import { AppInfo, ProtocolInfo } from './types/exports'
 
 type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
 
@@ -16,15 +14,15 @@ type Emitting = BridgeMap & {
 
 export default class Connector<EmittingMap extends Record<string, unknown>> extends Emitter<Flatten<EmittingMap & Emitting>> {
 	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
-	private _protocolInfo?: { protocol?: string, version?: string }
-	private _appInfo?: { name?: string, version?: string }
+	private _protocolInfo?: ProtocolInfo
+	private _appInfo?: AppInfo
 	private _bridge?: Bridge
 	private _session = 0
 	private _address?: string
 	private _listener
 	private _emitterPassthrough
 
-	constructor(protocolInfo?: { protocol?: string, version?: string }, appInfo?: { name?: string, logo?: string }, connectToUrl?: string | URL) {
+	constructor(protocolInfo?: ProtocolInfo, appInfo?: AppInfo, connectToUrl?: string | URL) {
 		super()
 		this._protocolInfo = protocolInfo
 		this._appInfo = appInfo
@@ -93,7 +91,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		this._bridge.off('message', this._listener)
 		this._bridge.off('builtin', this._emitterPassthrough)
 		const url = this._bridge.url
-		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != this._session)
+		Connector._bridges[url].sessions = Connector._bridges[url].sessions?.filter(x => x != this._session)
 		this._bridge = undefined
 		setTimeout(() => {
 			if (Connector._bridges[url].sessions.length) { return }

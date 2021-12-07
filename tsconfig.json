@@ -20,10 +20,7 @@
 			"esnext",
 			"dom"
 		],
-		"listEmittedFiles": false,
-		"listFiles": false,
 		"moduleResolution": "node",
-		"noFallthroughCasesInSwitch": true,
 		"pretty": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,

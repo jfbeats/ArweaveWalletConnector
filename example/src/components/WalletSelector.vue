@@ -1,51 +1,46 @@
 <template>
 	<div class="url-input">
-		<input class="url" v-model="data.url" :placeholder="walletData.url" @keydown.enter="connect" />
+		<input class="url" v-model="data.url" :placeholder="wallet.url" @keydown.enter="connect" />
 		<div class="actions">
 			<transition name="fade">
-				<Button v-if="walletData.address" class="action" :icon="popupIcon" @click="togglePopup" :class="{ dim: !walletData.keepPopup }" />
+				<Button v-if="wallet.address" class="action" :icon="popupIcon" @click="togglePopup" :class="{ dim: !wallet.keepPopup }" />
 			</transition>
-			<Button class="action" :icon="connectionIcon" @click="walletData.address ? disconnect() : connect()" :class="{ dim: data.loading }" />
+			<Button class="action" :icon="connectionIcon" @click="wallet.address ? disconnect() : connect()" :class="{ dim: data.loading }" />
 		</div>
 	</div>
 </template>
 
 
 
-<script lang="ts">
-import { wallet, walletData } from '../ReactiveWallet'
-import { defineComponent, reactive, computed } from "vue";
-
+<script setup lang="ts">
+import { wallet } from '../ReactiveWallet'
+import { reactive, computed } from "vue";
 import Button from './Button.vue';
 
-export default defineComponent({
-	components: { Button },
-	setup() {
-		const data = reactive({
-			url: walletData.url,
-			loading: false,
-		})
-		const connect = () => {
-			wallet.setUrl(data.url || walletData.url)
-			wallet.connect()
-			data.loading = true
-			wallet.once('change', () => data.loading = false)
-		}
-		const disconnect = () => wallet.disconnect()
-		const togglePopup = () => wallet.keepPopup = !wallet.keepPopup
-		const popupIcon = computed(() => walletData.keepPopup ? 'close' : 'launch')
-		const connectionIcon = computed(() => walletData.address ? 'unplug' : 'plug')
-		return { data, walletData, connect, disconnect, togglePopup, connectionIcon, popupIcon }
-	},
+// implement v-model
+
+const data = reactive({
+	url: wallet.url, // walletData should be persisted to storage to remember last selected wallet
+	loading: false,
 })
+const connect = () => {
+	wallet.setUrl(data.url || wallet.url)
+	wallet.connect()
+	data.loading = true
+	wallet.once('change', () => data.loading = false)
+}
+const disconnect = () => wallet.disconnect()
+const togglePopup = () => wallet.keepPopup = !wallet.keepPopup
+const popupIcon = computed(() => wallet.keepPopup ? 'close' : 'launch')
+const connectionIcon = computed(() => wallet.address ? 'unplug' : 'plug')
 </script>
 
 
 
 <style scoped>
 .url-input {
-	background: #ffffff05;
-	border: 0.5px solid #ffffff20;
+	background: #161616;
+	border: 0.5px solid #333;
 	display: flex;
 	align-items: stretch;
 	border-radius: 16px;
