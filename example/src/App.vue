@@ -1,5 +1,5 @@
 <template>
-	<div class="app no-scrollbar">
+	<div class="app">
 		<ArweaveOutlineLogo class="logo" />
 		<!-- link to: baseSourceUrl + /example/ + path -->
 		<!-- const wallet = new ArweaveWebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` }) -->
@@ -138,5 +138,13 @@ body {
 *:before,
 *:after {
 	box-sizing: inherit;
+}
+
+.no-scrollbar {
+	scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
 }
 </style>
