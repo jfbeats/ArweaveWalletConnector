@@ -1,5 +1,5 @@
 <template>
-	<div class="app">
+	<div class="app no-scrollbar">
 		<ArweaveOutlineLogo class="logo" />
 		<!-- link to: baseSourceUrl + /example/ + path -->
 		<!-- const wallet = new ArweaveWebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` }) -->

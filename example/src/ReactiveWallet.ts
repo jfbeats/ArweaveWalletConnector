@@ -1,7 +1,7 @@
 // Import the wallet connector
 import { ArweaveWebWallet } from 'arweave-wallet-connector'
 import { reactive } from 'vue'
-import { AppInfo } from 'arweave-wallet-connector/src/types/exports'
+import type { AppInfo } from 'arweave-wallet-connector'
 
 export class ReactiveWallet extends ArweaveWebWallet {
 	state = reactive({

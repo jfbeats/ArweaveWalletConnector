@@ -2,7 +2,7 @@ import { is } from 'typescript-is'
 
 import Emitter from './Emitter'
 import Bridge, { Emitting as InternalBridgeMap } from './Bridge'
-import { AppInfo, ProtocolInfo } from './types/exports'
+import { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
 
 type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
 
