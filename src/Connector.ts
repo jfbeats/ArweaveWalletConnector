@@ -37,7 +37,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 				this.emit('connect', params)
 				this.emit('change', params)
 			}
-			if (method === 'disconnect') { this.handleDisconnect() }
+			if (method === 'disconnect') { this.disconnectRequest() }
 		}
 		this._emitterPassthrough = <T extends keyof BridgeMap>(param: InternalBridgeMap['builtin']) => {
 			const event = Object.entries(param)[0] as [T, BridgeMap[T]]
@@ -47,8 +47,9 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	}
 
 	setUrl(connectToUrl: string | URL) {
-		this.disconnect()
 		const url = typeof connectToUrl === 'string' ? connectToUrl : connectToUrl.origin
+		if (this._bridge?.url === url) { return }
+		this.disconnect()
 		if (!Connector._bridges[url]) {
 			this._bridge = new Bridge(connectToUrl, this._appInfo)
 			Connector._bridges[url] = { bridge: this._bridge, sessions: [] }
@@ -60,6 +61,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		Connector._bridges[url].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
+		// todo we are landing on a different bridge, update keepPopup and usePopup, emit if new value
 	}
 
 	get address() { return this._address }
@@ -77,22 +79,33 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	}
 
 	async disconnect(options?: object) {
+		this.disconnectEvent()
 		if (!this._bridge) { return }
-		try { await this.postMessage('disconnect', options) } 
+		const bridge = this._bridge
+		const session = this._session
+		try { await this.postMessage('disconnect', options, 50) } 
 		catch (e) { console.warn('disconnect request failed') }
-		this.handleDisconnect()
+		this.handleDisconnect(bridge, session)
 	}
 
-	private handleDisconnect() {
+	private disconnectRequest() {
+		this.disconnectEvent()
+		this.handleDisconnect(this._bridge, this._session)
+	}
+
+	private disconnectEvent() {
 		this._address = undefined
 		this.emit('disconnect', undefined)
 		this.emit('change', undefined)
-		if (!this._bridge) { return }
-		this._bridge.off('message', this._listener)
-		this._bridge.off('builtin', this._emitterPassthrough)
-		const url = this._bridge.url
-		Connector._bridges[url].sessions = Connector._bridges[url].sessions?.filter(x => x != this._session)
-		this._bridge = undefined
+	}
+
+	private handleDisconnect(bridge: Bridge | undefined, session: number) {
+		if (!bridge) { return }
+		bridge.off('message', this._listener)
+		bridge.off('builtin', this._emitterPassthrough)
+		const url = bridge.url
+		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != session)
+		bridge = undefined
 		setTimeout(() => {
 			if (Connector._bridges[url].sessions.length) { return }
 			Connector._bridges[url].bridge.disconnect()
@@ -100,8 +113,8 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		}, 100)
 	}
 
-	postMessage(method: string, params?: any) {
+	postMessage(method: string, params?: any, timeout?: number) {
 		if (!this._bridge) { throw 'URL missing' }
-		return this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session })
+		return this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, timeout)
 	}
 }

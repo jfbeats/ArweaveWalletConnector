@@ -123,11 +123,12 @@ export default class Bridge extends Emitter<Emitting> {
 		// this.emit('disconnect', undefined)
 	}
 
-	postMessage(message: object) {
+	postMessage(message: object, timeout?: number) {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
 			.finally(() => !this._pending.length && this.closePopup())
 		this.deliverMessage({ ...message, id })
+		if (timeout) { setTimeout(() => this._promiseController[id].reject('timeout'), timeout) }
 		return promise
 	}
 
