@@ -37,7 +37,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 				this.emit('connect', params)
 				this.emit('change', params)
 			}
-			if (method === 'disconnect') { this.disconnectRequest() }
+			if (method === 'disconnect') { this.disconnectEvent(false) }
 		}
 		this._emitterPassthrough = <T extends keyof BridgeMap>(param: InternalBridgeMap['builtin']) => {
 			const event = Object.entries(param)[0] as [T, BridgeMap[T]]
@@ -78,34 +78,25 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		return promise
 	}
 
-	async disconnect(options?: object) {
-		this.disconnectEvent()
+	async disconnect(options?: object) { return this.disconnectEvent(true, options) }
+
+	private async disconnectEvent(fromMethod: boolean, options?: object) {
 		if (!this._bridge) { return }
 		const bridge = this._bridge
 		const session = this._session
-		try { await this.postMessage('disconnect', options, 50) } 
-		catch (e) { console.warn('disconnect request failed') }
-		this.handleDisconnect(bridge, session)
-	}
-
-	private disconnectRequest() {
-		this.disconnectEvent()
-		this.handleDisconnect(this._bridge, this._session)
-	}
-
-	private disconnectEvent() {
+		const url = bridge.url
 		this._address = undefined
+		this._bridge = undefined
+		this._session = 0
+		if (fromMethod) {
+			try { await bridge.postMessage({ method: 'disconnect', params: options, ...this._protocolInfo, session: session }) } 
+			catch (e) { console.warn('disconnect request failed') }
+		}
 		this.emit('disconnect', undefined)
 		this.emit('change', undefined)
-	}
-
-	private handleDisconnect(bridge: Bridge | undefined, session: number) {
-		if (!bridge) { return }
 		bridge.off('message', this._listener)
 		bridge.off('builtin', this._emitterPassthrough)
-		const url = bridge.url
 		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != session)
-		bridge = undefined
 		setTimeout(() => {
 			if (Connector._bridges[url].sessions.length) { return }
 			Connector._bridges[url].bridge.disconnect()

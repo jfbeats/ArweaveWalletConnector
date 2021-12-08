@@ -27,7 +27,6 @@ export default class Bridge extends Emitter<Emitting> {
 	private _popup: ChannelController = {}
 	private _usePopup: boolean = true
 	private _keepPopup: boolean = false
-	private _listening: boolean = false
 	private _promiseController: {
 		resolve: (value?: unknown) => void,
 		reject: (reason?: unknown) => void
@@ -45,8 +44,7 @@ export default class Bridge extends Emitter<Emitting> {
 			...this._appInfo,
 			session: Math.random().toString().slice(2)
 		}).toString()
-		if (!this._listening) { window.addEventListener('message', this.listener) }
-		this._listening = true
+		window.addEventListener('message', this.listener)
 		this.openIframe()
 	}
 
@@ -114,12 +112,9 @@ export default class Bridge extends Emitter<Emitting> {
 	// }
 
 	disconnect(options?: object) {
-
-
 		this.closeIframe()
 		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
-		this._listening = false
 		// this.emit('disconnect', undefined)
 	}
 
