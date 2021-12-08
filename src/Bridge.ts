@@ -85,13 +85,6 @@ export default class Bridge extends Emitter<Emitting> {
 		if (method === 'change') { return }
 
 		// verified methods
-		// if (method === 'connect') {
-		// 	if (typeof params !== 'string') { return }
-		// }
-		// if (method === 'disconnect') {
-		// 	if (params) { return }
-		// 	this.disconnect()
-		// }
 		if (method === 'usePopup') {
 			if (typeof params !== 'boolean') { return }
 			this._usePopup = params
@@ -106,16 +99,10 @@ export default class Bridge extends Emitter<Emitting> {
 		this.emit('message', emitting)
 	}
 
-	// connect(options?: object): Promise<string> {
-	// 	// address for autoconnect, permissions suggestions
-
-	// }
-
 	disconnect(options?: object) {
 		this.closeIframe()
 		this.closePopup(true)
 		window.removeEventListener('message', this.listener)
-		// this.emit('disconnect', undefined)
 	}
 
 	postMessage(message: object, timeout?: number) {
