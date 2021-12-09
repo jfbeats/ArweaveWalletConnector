@@ -5,9 +5,9 @@
 		<WalletSelector v-model="inputUrl" class="wallet-selector" />
 		<CodeBox :code="code[0]" />
 		<div>The connector module itself has no visual element included. This page is an example on how it can be integrated</div>
-		<button>View on Github</button>
+		<a class="button" href="https://github.com/jfbeats/ArweaveWalletConnector"><Github /><span>View on Github</span></a>
 		<section v-if="currentStep >= 1" id="s1" class="section">
-			<div>
+			<div class="ellipsis">
 				<p>Currently connected to:</p>
 				{{ wallet.address }}
 			</div>
@@ -23,6 +23,7 @@
 import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
 import WalletSelector from './components/WalletSelector.vue'
 import CodeBox from './components/CodeBox.vue'
+import Github from './components/Github.vue'
 import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
 
@@ -40,7 +41,7 @@ const transactionData = reactive({
 
 const signTransaction = async () => {
 	try {
-		const transaction = await arweave.createTransaction(transactionData)
+		const transaction = await arweave.createTransaction({ ...transactionData })
 		transaction.addTag('App-Name', 'Donate to the developer')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
@@ -74,7 +75,8 @@ const displayNum = (num: any) => {
 const txToString = (obj: any) => Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${e[1]}'${ e[0]=='quantity' ? ` // ${ displayNum(arweave.ar.winstonToAr(e[1] as string)) } AR` : '' }\n`, '')
 
 const code = computed(() => [
-`const wallet = new ArweaveWebWallet({
+`import { ArweaveWebWallet } from 'arweave-wallet-connector'
+const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
 })
@@ -137,6 +139,22 @@ button {
 	line-height: inherit;
 	text-align: inherit;
 }
+
+a.button {
+	font-size: 0.8em;
+	opacity: 0.75;
+	color: inherit;
+	text-decoration: none;
+	padding: 1em 1.5em 1em 1em;
+	background: #202020;
+	border-radius: 1em;
+	display: flex;
+	align-items: center;
+}
+
+a.button > * + * {
+	margin-inline-start: 1.5em;
+}
 </style>
 
 
@@ -173,5 +191,10 @@ body {
 
 .no-scrollbar::-webkit-scrollbar {
 	display: none;
+}
+
+.ellipsis {
+	text-overflow: ellipsis;
+    overflow: hidden;
 }
 </style>

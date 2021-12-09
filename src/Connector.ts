@@ -47,18 +47,20 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	}
 
 	setUrl(connectToUrl: string | URL) {
-		const url = typeof connectToUrl === 'string' ? connectToUrl : connectToUrl.origin
-		if (this._bridge?.url === url) { return }
+		const url = typeof connectToUrl === 'string'
+			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
+			: connectToUrl
+		if (this._bridge?.url === url.origin) { return }
 		this.disconnect()
-		if (!Connector._bridges[url]) {
-			this._bridge = new Bridge(connectToUrl, this._appInfo)
-			Connector._bridges[url] = { bridge: this._bridge, sessions: [] }
+		if (!Connector._bridges[url.origin]) {
+			this._bridge = new Bridge(url, this._appInfo)
+			Connector._bridges[url.origin] = { bridge: this._bridge, sessions: [] }
 		} else {
-			this._bridge = Connector._bridges[url].bridge
-			const sessions = Connector._bridges[url].sessions
+			this._bridge = Connector._bridges[url.origin].bridge
+			const sessions = Connector._bridges[url.origin].sessions
 			for (let i = 0; i <= sessions.length; i++) { if (sessions.indexOf(i) < 0) { this._session = i; break } }
 		}
-		Connector._bridges[url].sessions.push(this._session)
+		Connector._bridges[url.origin].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
 		// todo we are landing on a different bridge, update keepPopup and usePopup, emit if new value

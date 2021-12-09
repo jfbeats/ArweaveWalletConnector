@@ -5,7 +5,7 @@ import type { AppInfo } from 'arweave-wallet-connector'
 
 export class ReactiveWallet extends ArweaveWebWallet {
 	state = reactive({
-		url: import.meta.env.DEV ? "http://localhost:8080" : 'arweave.app',
+		url: import.meta.env.DEV ? 'http://localhost:8080' : 'arweave.app',
 		address: undefined as undefined | string,
 		keepPopup: false,
 		error: '',

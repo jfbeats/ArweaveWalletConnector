@@ -33,12 +33,10 @@ export default class Bridge extends Emitter<Emitting> {
 	}[] = []
 	private _pending: number[] = []
 
-	constructor(connectToUrl: string | URL, appInfo?: object) {
+	constructor(connectToUrl: URL, appInfo?: object) {
 		super()
 		this._appInfo = appInfo
-		this._url = typeof connectToUrl === 'string'
-			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
-			: connectToUrl
+		this._url = connectToUrl
 		this._url.hash = new URLSearchParams({
 			origin: window.location.origin,
 			...this._appInfo,
