@@ -29,6 +29,7 @@ export class ArweaveWebWallet extends Connector<Emitting> {
 	}
 
 	async signTransaction(tx: Transaction, options?: object): Promise<Transaction> {
+		// check if tx is Transaction or object
 		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
 		const res = await this.postMessage('signTransaction', { tx: txHeader, options })
 		if (!is<{ id: string, owner?: string, tags?: Tag[], signature: string, fee?: string }>(res)) { throw 'TypeError' }

@@ -2,10 +2,8 @@
 	<div class="app">
 		<ArweaveOutlineLogo class="logo" />
 		<!-- link to: baseSourceUrl + /example/ + path -->
-		<!-- const wallet = new ArweaveWebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` }) -->
 		<WalletSelector v-model="inputUrl" class="wallet-selector" />
 		<CodeBox :code="code[0]" />
-		<!-- wallet.setUrl({{ inputUrl }}) -->
 		<div>The connector module itself has no visual element included. This page is an example on how it can be integrated</div>
 		<button>View on Github</button>
 		<section v-if="currentStep >= 1" id="s1" class="section">
@@ -13,8 +11,8 @@
 				<p>Currently connected to:</p>
 				{{ wallet.address }}
 			</div>
-			<!-- wallet.sign({{ data }}) -->
 			<button v-if="wallet.address" @click="signTransaction">Sign Transaction</button>
+			<CodeBox :code="code[1]" />
 		</section>
 	</div>
 </template>
@@ -32,15 +30,15 @@ import { reactive, ref, computed, watch } from 'vue'
 // reactivity engine instead of importing the connector directly
 import { wallet } from './ReactiveWallet'
 
+const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
+
 const transactionData = reactive({
 	quantity: '100000000000',
-	owner: wallet.address,
 	target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
 	data: 'hello world',
 })
 
 const signTransaction = async () => {
-	const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 	try {
 		const transaction = await arweave.createTransaction(transactionData)
 		transaction.addTag('App-Name', 'Donate to the developer')
@@ -67,14 +65,24 @@ watch(currentStep, (val, oldVal) => {
 	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }))
 })
 
+const displayNum = (num: any) => {
+	const FractionDigits = new Intl.NumberFormat(navigator.languages as any, { maximumFractionDigits: 3 }).format(num)
+	const SignificantDigits = new Intl.NumberFormat(navigator.languages as any, { maximumSignificantDigits: 1 }).format(num)
+	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits
+}
 
+const txToString = (obj: any) => Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${e[1]}'${ e[0]=='quantity' ? ` // ${ displayNum(arweave.ar.winstonToAr(e[1] as string)) } AR` : '' }\n`, '')
 
 const code = computed(() => [
 `const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
 })
-wallet.setUrl('${inputUrl.value}')`
+wallet.setUrl('${inputUrl.value}')`,
+
+`const transaction = await arweave.createTransaction({
+${txToString(transactionData)}})
+await wallet.signTransaction(transaction)`,
 ])
 </script>
 
@@ -97,6 +105,8 @@ wallet.setUrl('${inputUrl.value}')`
 
 .section {
 	min-height: 100vh;
+	width: 100%;
+	max-width: 800px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
