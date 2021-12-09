@@ -126,6 +126,7 @@ await wallet.signTransaction(transaction)`,
 .wallet-selector {
 	position: sticky;
 	top: calc(var(--app-spacing) / 2);
+	z-index: 1;
 }
 
 button {
