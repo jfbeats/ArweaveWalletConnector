@@ -1,6 +1,6 @@
 <template>
 	<div class="url-input">
-		<input class="url" v-model="data.url" :placeholder="wallet.url" @keydown.enter="connect" />
+		<input class="url" v-model="model" :placeholder="wallet.url" @keydown.enter="connect" />
 		<div class="actions">
 			<transition name="fade">
 				<Button v-if="wallet.address" class="action" :icon="popupIcon" @click="togglePopup" :class="{ dim: !wallet.keepPopup }" />
@@ -17,14 +17,17 @@ import { wallet } from '../ReactiveWallet'
 import { reactive, computed } from "vue";
 import Button from './Button.vue';
 
-// implement v-model
-
+const props = defineProps(['modelValue', 'icon', 'placeholder', 'actions', 'autocomplete', 'mask', 'disabled', 'id'])
+const emit = defineEmits(['update:modelValue'])
+const model = computed<string>({ // url should be persisted to storage to remember last selected wallet
+	get () { return props.modelValue },
+	set (value) { emit('update:modelValue', value) }
+})
 const data = reactive({
-	url: wallet.url, // walletData should be persisted to storage to remember last selected wallet
 	loading: false,
 })
 const connect = () => {
-	wallet.setUrl(data.url || wallet.url)
+	wallet.setUrl(model.value || wallet.url)
 	wallet.connect()
 	data.loading = true
 	wallet.once('change', () => data.loading = false)

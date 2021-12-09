@@ -1,7 +1,8 @@
 // import Arweave from 'arweave'
-import type Transaction from 'arweave/node/lib/transaction'
-import type { ApiConfig } from 'arweave/node/lib/api'
-import type { SerializedUploader, TransactionUploader } from 'arweave/node/lib/transaction-uploader'
+import type Transaction from 'arweave/web/lib/transaction'
+import type { ApiConfig } from 'arweave/web/lib/api'
+import type { SerializedUploader, TransactionUploader } from 'arweave/web/lib/transaction-uploader'
+import type { Tag } from 'arweave/web/lib/transaction'
 import { is } from 'typescript-is'
 
 import Connector from './Connector'
@@ -30,8 +31,8 @@ export class ArweaveWebWallet extends Connector<Emitting> {
 	async signTransaction(tx: Transaction, options?: object): Promise<Transaction> {
 		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
 		const res = await this.postMessage('signTransaction', { tx: txHeader, options })
-		if (!is<{ signature: string, fee?: string }>(res)) { throw 'TypeError' }
-		tx.signature = res.signature
+		if (!is<{ id: string, owner?: string, tags?: Tag[], signature: string, fee?: string }>(res)) { throw 'TypeError' }
+		tx.setSignature({ id: res.id, owner: res.owner || tx.owner, tags: res.tags, signature: res.signature })
 		if (res.fee) { tx.fee = res.fee } // todo only if not bundle data transaction?
 		return tx
 	}

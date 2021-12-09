@@ -3,16 +3,19 @@
 		<ArweaveOutlineLogo class="logo" />
 		<!-- link to: baseSourceUrl + /example/ + path -->
 		<!-- const wallet = new ArweaveWebWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` }) -->
-		<WalletSelector class="wallet-selector" />
+		<WalletSelector v-model="inputUrl" class="wallet-selector" />
+		<CodeBox :code="code[0]" />
 		<!-- wallet.setUrl({{ inputUrl }}) -->
 		<div>The connector module itself has no visual element included. This page is an example on how it can be integrated</div>
 		<button>View on Github</button>
 		<section v-if="currentStep >= 1" id="s1" class="section">
-			<div>{{ wallet.address }}</div>
+			<div>
+				<p>Currently connected to:</p>
+				{{ wallet.address }}
+			</div>
 			<!-- wallet.sign({{ data }}) -->
 			<button v-if="wallet.address" @click="signTransaction">Sign Transaction</button>
 		</section>
-
 	</div>
 </template>
 
@@ -21,22 +24,25 @@
 <script setup lang="ts">
 import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
 import WalletSelector from './components/WalletSelector.vue'
+import CodeBox from './components/CodeBox.vue'
 import Arweave from 'arweave'
-import { ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 
 // Here, we import an instance of a wrapper class made for the Vue
 // reactivity engine instead of importing the connector directly
 import { wallet } from './ReactiveWallet'
 
+const transactionData = reactive({
+	quantity: '100000000000',
+	owner: wallet.address,
+	target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
+	data: 'hello world',
+})
+
 const signTransaction = async () => {
 	const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 	try {
-		const transaction = await arweave.createTransaction({
-			quantity: '100000000000',
-			owner: wallet.address,
-			target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
-			data: 'hello world',
-		})
+		const transaction = await arweave.createTransaction(transactionData)
 		transaction.addTag('App-Name', 'Donate to the developer')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
@@ -46,8 +52,8 @@ const signTransaction = async () => {
 }
 
 
-
-const inputUrl = ref('')
+// const location = window.location
+const inputUrl = ref(wallet.url)
 const currentStep = computed(() => {
 	const conditions = [
 		wallet.address
@@ -60,6 +66,16 @@ watch(currentStep, (val, oldVal) => {
 	if (val <= oldVal) { return }
 	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }))
 })
+
+
+
+const code = computed(() => [
+`const wallet = new ArweaveWebWallet({
+	name: 'Connector Example',
+	logo: '${location.href}placeholder.svg'
+})
+wallet.setUrl('${inputUrl.value}')`
+])
 </script>
 
 
@@ -67,6 +83,7 @@ watch(currentStep, (val, oldVal) => {
 <style scoped>
 .app {
 	--app-spacing: 80px;
+	--spacing: 2em;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
