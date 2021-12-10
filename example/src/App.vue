@@ -93,13 +93,24 @@ await wallet.signTransaction(transaction)`,
 
 <style scoped>
 .app {
-	--app-spacing: 80px;
+	--app-spacing: 48px;
 	--spacing: 2em;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	padding: var(--app-spacing);
-	padding-bottom: 0;
+}
+
+@media (max-width: 599px) {
+	.app {
+		--app-spacing: 24px;
+	}
+}
+
+@media (max-width: 399px) {
+	.app {
+		--app-spacing: 12px;
+	}
 }
 
 .app > * + * {
@@ -120,7 +131,7 @@ await wallet.signTransaction(transaction)`,
 }
 
 .logo {
-	height: 400px;
+	max-height: 400px;
 	opacity: 0.9;
 }
 
