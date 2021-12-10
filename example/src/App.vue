@@ -63,7 +63,7 @@ const currentStep = computed(() => {
 })
 watch(currentStep, (val, oldVal) => {
 	if (val <= oldVal) { return }
-	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }))
+	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }), 100)
 })
 
 const displayNum = (num: any) => {

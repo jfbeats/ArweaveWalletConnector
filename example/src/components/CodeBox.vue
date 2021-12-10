@@ -1,6 +1,6 @@
 <template>
 	<div class="code-box">
-	<highlightjs class="box" :code="code" />
+		<highlightjs class="box" :code="code" />
 	</div>
 </template>
 
