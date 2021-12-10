@@ -61,9 +61,10 @@ const currentStep = computed(() => {
 	while (conditions[step]) { step++ }
 	return step
 })
-watch(currentStep, (val, oldVal) => {
+watch(currentStep, async (val, oldVal) => {
 	if (val <= oldVal) { return }
-	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }), 100)
+	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
+	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }), 300)
 })
 
 const displayNum = (num: any) => {
