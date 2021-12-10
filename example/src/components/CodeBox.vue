@@ -14,9 +14,9 @@ const props = defineProps(['code'])
 
 <style scoped>
 .code-box {
-	margin-block-start: 12px !important;
 	width: 100%;
 	max-width: 800px;
+
 }
 
 .box {

@@ -5,14 +5,24 @@
 		<WalletSelector v-model="inputUrl" class="wallet-selector" />
 		<CodeBox :code="code[0]" />
 		<div>The connector module itself has no visual element included. This page is an example on how it can be integrated</div>
-		<a class="button" href="https://github.com/jfbeats/ArweaveWalletConnector"><Github /><span>View on Github</span></a>
+		<a class="button" href="https://github.com/jfbeats/ArweaveWalletConnector">
+			<Github />
+			<span>View on Github</span>
+		</a>
+		<div />
 		<section v-if="currentStep >= 1" id="s1" class="section">
 			<div class="ellipsis">
-				<p>Currently connected to:</p>
+				<div>This page is now linked to {{ wallet.url }} with the selected address :</div>
 				{{ wallet.address }}
 			</div>
-			<button v-if="wallet.address" @click="signTransaction">Sign Transaction</button>
+			<div style="display: flex; justify-content: center;">
+				<button class="button" v-if="wallet.address" @click="signTransaction">
+					<Rule />
+					<span>Sign Transaction</span>
+				</button>
+			</div>
 			<CodeBox :code="code[1]" />
+			<div />
 		</section>
 	</div>
 </template>
@@ -23,7 +33,8 @@
 import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
 import WalletSelector from './components/WalletSelector.vue'
 import CodeBox from './components/CodeBox.vue'
-import Github from './components/Github.vue'
+import Github from './components/IconGithub.vue'
+import Rule from './components/IconRule.vue'
 import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
 
@@ -73,17 +84,18 @@ const displayNum = (num: any) => {
 	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits
 }
 
-const txToString = (obj: any) => Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${e[1]}'${ e[0]=='quantity' ? ` // ${ displayNum(arweave.ar.winstonToAr(e[1] as string)) } AR` : '' }\n`, '')
+const txToString = (obj: any) => Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${e[1]}'${e[0] == 'quantity' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
 
 const code = computed(() => [
-`import { ArweaveWebWallet } from 'arweave-wallet-connector'
+	`import { ArweaveWebWallet } from 'arweave-wallet-connector'
 const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
 })
+
 wallet.setUrl('${inputUrl.value}')`,
 
-`const transaction = await arweave.createTransaction({
+	`const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
 await wallet.signTransaction(transaction)`,
 ])
@@ -99,6 +111,7 @@ await wallet.signTransaction(transaction)`,
 	flex-direction: column;
 	align-items: center;
 	padding: var(--app-spacing);
+	padding-bottom: 0;
 }
 
 @media (max-width: 599px) {
@@ -125,6 +138,10 @@ await wallet.signTransaction(transaction)`,
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+}
+
+.section > *:first-child {
+	margin-top: calc(var(--app-spacing) * 2 + 5em);
 }
 
 .section > * + * {
@@ -154,19 +171,22 @@ button {
 	text-align: inherit;
 }
 
-a.button {
+.button {
 	font-size: 0.8em;
-	opacity: 0.75;
-	color: inherit;
+	color: #ccc;
 	text-decoration: none;
 	padding: 1em 1.5em 1em 1em;
 	background: #202020;
-	border-radius: 1em;
+	border-radius: 1.6em;
 	display: flex;
 	align-items: center;
+	/* background: linear-gradient(145deg, #0f0f0f, #121212); */
+
+	box-shadow:  5px 5px 20px #070707,
+             -5px -5px 20px #1b1b1b;
 }
 
-a.button > * + * {
+.button > * + * {
 	margin-inline-start: 1.5em;
 }
 </style>
@@ -178,6 +198,7 @@ html {
 	background: #111;
 	box-sizing: border-box;
 	line-height: 2;
+	scroll-snap-type: y mandatory;
 }
 
 body {
@@ -209,6 +230,6 @@ body {
 
 .ellipsis {
 	text-overflow: ellipsis;
-    overflow: hidden;
+	overflow: hidden;
 }
 </style>

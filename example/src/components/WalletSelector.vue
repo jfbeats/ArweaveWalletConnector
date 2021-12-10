@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { wallet } from '../ReactiveWallet'
 import { reactive, computed } from "vue";
-import Button from './Button.vue';
+import Button from './WalletSelectorIcons.vue';
 
 const props = defineProps(['modelValue', 'icon', 'placeholder', 'actions', 'autocomplete', 'mask', 'disabled', 'id'])
 const emit = defineEmits(['update:modelValue'])
@@ -46,7 +46,7 @@ const connectionIcon = computed(() => wallet.address ? 'unplug' : 'plug')
 	border: 0.5px solid #333;
 	display: flex;
 	align-items: stretch;
-	border-radius: 16px;
+	border-radius: 8px;
 	width: 100%;
 	min-width: 0;
 	max-width: 800px;
