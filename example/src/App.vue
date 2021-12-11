@@ -180,10 +180,13 @@ button {
 	border-radius: 1.6em;
 	display: flex;
 	align-items: center;
-	/* background: linear-gradient(145deg, #0f0f0f, #121212); */
+	box-shadow: 5px 5px 20px #070707, -5px -5px 20px #1b1b1b;
+	transition: 1s ease;
+}
 
-	box-shadow:  5px 5px 20px #070707,
-             -5px -5px 20px #1b1b1b;
+.button:active {
+	background: #111;
+	transition: 0s ease;
 }
 
 .button > * + * {
