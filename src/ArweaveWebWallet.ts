@@ -20,7 +20,7 @@ export interface ArweaveInterface {
 	decrypt(message: string, options?: object): Promise<string>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
-	signTransaction(tx: TransactionInterface, options?: object): { id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }
+	signTransaction(tx: TransactionInterface, options?: object): Promise<{ id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
