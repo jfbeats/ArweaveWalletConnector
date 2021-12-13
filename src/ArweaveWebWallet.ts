@@ -1,6 +1,6 @@
 import Connector from './Connector'
 import { is } from 'typescript-is'
-import type { AsProvider, AsVerifier, Override } from './types'
+import type { FromProvider, AsVerifier, Override } from './types'
 import type TransactionInterface from 'arweave/web/lib/transaction'
 import type { ApiConfig } from 'arweave/web/lib/api'
 
@@ -19,9 +19,10 @@ export interface ArweaveInterface {
 	sign(message: string, options?: object): Promise<string>
 	decrypt(message: string, options?: object): Promise<string>
 }
-export interface ArweaveProviderInterface extends AsProvider<ArweaveInterface, {
+export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	signTransaction(tx: TransactionInterface, options?: object): { id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }
 }> {}
+interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
 
 
@@ -36,13 +37,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 
 	async getPublicKey() {
 		const res = await this.postMessage('getPublicKey')
-		if (!is<ReturnType<ArweaveProviderInterface['getPublicKey']>>(res)) { throw 'TypeError' }
+		if (!is<FromArweaveProvider['getPublicKey']>(res)) { throw 'TypeError' }
 		return res
 	}
 
 	async getArweaveConfig() {
 		const res = await this.postMessage('getArweaveConfig')
-		if (!is<ReturnType<ArweaveProviderInterface['getArweaveConfig']>>(res)) { throw 'TypeError' }
+		if (!is<FromArweaveProvider['getArweaveConfig']>(res)) { throw 'TypeError' }
 		delete res.logger
 		return res
 	}
@@ -51,7 +52,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 		// check if tx is Transaction or object
 		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
 		const res = await this.postMessage('signTransaction', [txHeader, options])
-		if (!is<ReturnType<ArweaveProviderInterface['signTransaction']>>(res)) { throw 'TypeError' }
+		if (!is<FromArweaveProvider['signTransaction']>(res)) { throw 'TypeError' }
 		tx.setSignature({ id: res.id, owner: res.owner || tx.owner, signature: res.signature }) // todo res.tags
 		if (res.fee) { tx.fee = res.fee }
 		return tx
@@ -66,13 +67,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 
 	async sign(message: string, options?: object) {
 		const res = await this.postMessage('sign', [message, options])
-		if (!is<ReturnType<ArweaveProviderInterface['sign']>>(res)) { throw 'TypeError' }
+		if (!is<FromArweaveProvider['sign']>(res)) { throw 'TypeError' }
 		return res
 	}
 
 	async decrypt(message: string, options?: object) {
 		const res = await this.postMessage('decrypt', [message, options])
-		if (!is<ReturnType<ArweaveProviderInterface['decrypt']>>(res)) { throw 'TypeError' }
+		if (!is<FromArweaveProvider['decrypt']>(res)) { throw 'TypeError' }
 		return res
 	}
 }
