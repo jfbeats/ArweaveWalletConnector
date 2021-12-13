@@ -79,7 +79,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 
 
 
-export class ArweaveVerifierInterface implements AsVerifier<ArweaveInterface> {
+export class ArweaveVerifier implements AsVerifier<ArweaveInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Tx, options?: object | undefined): boolean {
