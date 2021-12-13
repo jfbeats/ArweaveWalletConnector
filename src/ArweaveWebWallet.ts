@@ -2,7 +2,7 @@ import Connector from './Connector'
 import { is } from 'typescript-is'
 import type TransactionInterface from 'arweave/web/lib/transaction'
 import type { ApiConfig } from 'arweave/web/lib/api'
-import type { Verificator } from './types'
+import type { Verifier } from './types'
 
 
 
@@ -52,7 +52,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveAPI 
 	async signTransaction(tx: TransactionInterface, options?: object) {
 		// check if tx is Transaction or object
 		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
-		const res = await this.postMessage('signTransaction', { tx: txHeader, options })
+		const res = await this.postMessage('signTransaction', [txHeader, options])
 		if (!is<Awaited<ReturnType<ArweaveProviderAPI['signTransaction']>>>(res)) { throw 'TypeError' }
 		tx.setSignature({ id: res.id, owner: res.owner || tx.owner, signature: res.signature }) // todo res.tags
 		if (res.fee) { tx.fee = res.fee }
@@ -67,13 +67,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveAPI 
 	// }
 
 	async sign(message: string, options?: object) {
-		const res = await this.postMessage('sign', { message, options })
+		const res = await this.postMessage('sign', [message, options])
 		if (!is<Awaited<ReturnType<ArweaveProviderAPI['sign']>>>(res)) { throw 'TypeError' }
 		return res
 	}
 
 	async decrypt(message: string, options?: object) {
-		const res = await this.postMessage('decrypt', { message, options })
+		const res = await this.postMessage('decrypt', [message, options])
 		if (!is<Awaited<ReturnType<ArweaveProviderAPI['decrypt']>>>(res)) { throw 'TypeError' }
 		return res
 	}
@@ -81,7 +81,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveAPI 
 
 
 
-export class ArweaveWebWalletVerificator implements Verificator<ArweaveAPI> {
+export class ArweaveWebWalletVerifier implements Verifier<ArweaveAPI> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Tx, options?: object | undefined): boolean {

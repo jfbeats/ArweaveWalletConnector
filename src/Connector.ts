@@ -91,7 +91,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
-			try { await bridge.postMessage({ method: 'disconnect', params: options, ...this._protocolInfo, session: session }) } 
+			try { await bridge.postMessage({ method: 'disconnect', params: [options], ...this._protocolInfo, session: session }) } 
 			catch (e) { console.warn('disconnect request failed') }
 		}
 		this.emit('disconnect', undefined)
@@ -106,7 +106,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		}, 100)
 	}
 
-	postMessage(method: string, params?: any, timeout?: number) {
+	postMessage(method: string, params?: any[], timeout?: number) {
 		if (!this._bridge) { throw 'URL missing' }
 		return this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, timeout)
 	}
