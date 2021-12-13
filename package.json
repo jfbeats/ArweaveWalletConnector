@@ -1,6 +1,6 @@
 {
 	"name": "arweave-wallet-connector",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "WIP",
 	"type": "module",
 	"module": "lib/index.js",
