@@ -1,22 +1,33 @@
-// import Arweave from 'arweave'
+import Connector from './Connector'
+import { is } from 'typescript-is'
 import type TransactionInterface from 'arweave/web/lib/transaction'
 import type { ApiConfig } from 'arweave/web/lib/api'
-import { is } from 'typescript-is'
+import type { Verificator } from './types'
 
-import Connector from './Connector'
+
+
+interface TxOverrides {
+	tags: { name: string, value: string }[]
+}
+interface Tx extends TxOverrides, Omit<TransactionInterface, keyof TxOverrides> {}
+
+
 
 export interface ArweaveAPI {
 	getPublicKey(): Promise<string>
-	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'> & { logger: undefined }>
+	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'> & { logger?: any }>
 	signTransaction(tx: TransactionInterface, options?: object): Promise<TransactionInterface>
 	sign(message: string, options?: object): Promise<string>
 	decrypt(message: string, options?: object): Promise<string>
 }
-type Emitting = {}
 interface ProviderOverrides {
 	signTransaction(tx: TransactionInterface, options?: object): { id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }
 }
 export interface ArweaveProviderAPI extends ProviderOverrides, Omit<ArweaveAPI, keyof ProviderOverrides> {}
+
+
+
+type Emitting = {}
 
 
 
@@ -33,7 +44,6 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveAPI 
 
 	async getArweaveConfig() {
 		const res = await this.postMessage('getArweaveConfig')
-		type ReceivedApiConfig = Omit<ApiConfig, 'logger'> & { logger: any }
 		if (!is<Awaited<ReturnType<ArweaveProviderAPI['getArweaveConfig']>>>(res)) { throw 'TypeError' }
 		delete res.logger
 		return res
@@ -66,5 +76,21 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveAPI 
 		const res = await this.postMessage('decrypt', { message, options })
 		if (!is<Awaited<ReturnType<ArweaveProviderAPI['decrypt']>>>(res)) { throw 'TypeError' }
 		return res
+	}
+}
+
+
+
+export class ArweaveWebWalletVerificator implements Verificator<ArweaveAPI> {
+	getPublicKey() { return true }
+	getArweaveConfig() { return true }
+	signTransaction(tx: Tx, options?: object | undefined): boolean {
+		return is<typeof tx>(tx) && is<typeof options>(options)
+	}
+	sign(message: string, options?: object | undefined): boolean {
+		return is<typeof message>(message) && is<typeof options>(options)
+	}
+	decrypt(message: string, options?: object | undefined): boolean {
+		return is<typeof message>(message) && is<typeof options>(options)
 	}
 }

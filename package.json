@@ -1,6 +1,6 @@
 {
 	"name": "arweave-wallet-connector",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "WIP",
 	"type": "module",
 	"module": "lib/index.js",
@@ -15,11 +15,11 @@
 	},
 	"license": "ISC",
 	"dependencies": {
-		"arweave": "^1.10.16",
 		"mitt": "^3.0.0",
 		"typescript-is": "^0.19.0"
 	},
 	"devDependencies": {
+		"arweave": "^1.10.16",
 		"esbuild": "^0.13.14",
 		"rimraf": "^3.0.2",
 		"ttypescript": "^1.5.12",
