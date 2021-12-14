@@ -83,7 +83,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 export class ArweaveVerifier implements AsVerifier<ArweaveInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
-	signTransaction(tx: Tx, options?: object | undefined): boolean {
+	signTransaction(tx: Partial<Tx>, options?: object | undefined): boolean {
 		return is<typeof tx>(tx) && is<typeof options>(options)
 	}
 	sign(message: string, options?: object | undefined): boolean {
