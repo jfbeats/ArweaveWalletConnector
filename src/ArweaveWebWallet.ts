@@ -1,26 +1,29 @@
 import Connector from './Connector'
 import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override } from './types'
-import type TransactionInterface from 'arweave/web/lib/transaction'
+import type Transaction from 'arweave/web/lib/transaction'
+import type { TransactionInterface } from 'arweave/web/lib/transaction'
 import type { ApiConfig } from 'arweave/web/lib/api'
 
 
 
-interface Tx extends Override<TransactionInterface, {
+interface SerializedTx extends Override<TransactionInterface, {
 	tags: { name: string, value: string }[]
+	data: any
 }> {}
 
 
 
 export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
-	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'> & { logger?: any }>
-	signTransaction(tx: TransactionInterface, options?: object): Promise<TransactionInterface>
+	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
+	signTransaction(tx: Transaction, options?: object): Promise<Transaction>
 	sign(message: string, options?: object): Promise<string>
 	decrypt(message: string, options?: object): Promise<string>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
-	signTransaction(tx: TransactionInterface, options?: object): Promise<{ id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }>
+	signTransaction(tx: Partial<SerializedTx>, options?: object): Promise<{ id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }>
+	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
@@ -48,7 +51,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 		return res
 	}
 
-	async signTransaction(tx: TransactionInterface, options?: object) {
+	async signTransaction(tx: Transaction, options?: object) {
 		// check if tx is Transaction or object
 		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
 		const res = await this.postMessage('signTransaction', [txHeader, options])
@@ -80,10 +83,10 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 
 
 
-export class ArweaveVerifier implements AsVerifier<ArweaveInterface> {
+export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
-	signTransaction(tx: Partial<Tx>, options?: object | undefined): boolean {
+	signTransaction(tx: Partial<SerializedTx>, options?: object | undefined): boolean {
 		return is<typeof tx>(tx) && is<typeof options>(options)
 	}
 	sign(message: string, options?: object | undefined): boolean {
