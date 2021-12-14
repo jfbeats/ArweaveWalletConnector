@@ -17,12 +17,12 @@ interface SerializedTx extends Override<TransactionInterface, {
 export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
-	signTransaction(tx: Transaction, options?: object): Promise<Transaction>
-	sign(message: string, options?: object): Promise<string>
-	decrypt(message: string, options?: object): Promise<string>
+	signTransaction(tx: Transaction, options?: object | null): Promise<Transaction>
+	sign(message: string, options?: object | null): Promise<string>
+	decrypt(message: string, options?: object | null): Promise<string>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
-	signTransaction(tx: Partial<SerializedTx>, options?: object): Promise<{ id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }>
+	signTransaction(tx: Partial<SerializedTx>, options?: object | null): Promise<{ id: string, owner?: string, tags?: { name: string, value: string }[], signature: string, fee?: string }>
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
@@ -86,13 +86,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
-	signTransaction(tx: Partial<SerializedTx>, options?: object | undefined): boolean {
+	signTransaction(tx: Partial<SerializedTx>, options?: object | null): boolean {
 		return is<typeof tx>(tx) && is<typeof options>(options)
 	}
-	sign(message: string, options?: object | undefined): boolean {
+	sign(message: string, options?: object | null): boolean {
 		return is<typeof message>(message) && is<typeof options>(options)
 	}
-	decrypt(message: string, options?: object | undefined): boolean {
+	decrypt(message: string, options?: object | null): boolean {
 		return is<typeof message>(message) && is<typeof options>(options)
 	}
 }
