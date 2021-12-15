@@ -1,16 +1,18 @@
-import { is } from 'typescript-is'
-
 import Emitter from './Emitter'
 import Bridge, { Emitting as InternalBridgeMap } from './Bridge'
+import { is } from 'typescript-is'
 import { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
 
-type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
 
+
+type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
 type Emitting = BridgeMap & {
 	connect: string
 	disconnect: undefined
 	change: string | undefined
 }
+
+
 
 export default class Connector<EmittingMap extends Record<string, unknown>> extends Emitter<Flatten<EmittingMap & Emitting>> {
 	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
