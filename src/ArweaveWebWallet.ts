@@ -18,8 +18,8 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	sign(message: string, options?: object | Null): Promise<string>
-	decrypt(message: string, options?: object | Null): Promise<string>
+	sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]): Promise<ArrayBuffer>
+	decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]): Promise<ArrayBuffer>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
@@ -74,13 +74,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 	// 	return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
 	// }
 
-	async sign(message: string, options?: object | Null) {
+	async sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]) {
 		const res = await this.postMessage('sign', [message, options])
 		if (!is<FromArweaveProvider['sign']>(res)) { throw 'TypeError' }
 		return res
 	}
 
-	async decrypt(message: string, options?: object | Null) {
+	async decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]) {
 		const res = await this.postMessage('decrypt', [message, options])
 		if (!is<FromArweaveProvider['decrypt']>(res)) { throw 'TypeError' }
 		return res
@@ -93,6 +93,6 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
-	sign(message: string, options?: object | Null) { return is<typeof message>(message) && is<typeof options>(options) }
-	decrypt(message: string, options?: object | Null) { return is<typeof message>(message) && is<typeof options>(options) }
+	sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]) { return is<typeof message>(message) && is<typeof options>(options) }
+	decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]) { return is<typeof message>(message) && is<typeof options>(options) }
 }
