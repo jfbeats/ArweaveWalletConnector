@@ -11,6 +11,8 @@ interface SerializedTx extends Override<TransactionInterface, {
 	tags: { name: string, value: string }[]
 	data: any
 }> {}
+type SignOptions = Parameters<typeof window.crypto.subtle.sign>[0]
+type DecryptOptions = AlgorithmIdentifier | Override<RsaOaepParams, { label?: string }>
 
 
 
@@ -18,15 +20,15 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]): Promise<ArrayBuffer>
-	decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]): Promise<ArrayBuffer>
+	sign(message: string, options: SignOptions): Promise<string>
+	decrypt(message: string, options: DecryptOptions): Promise<string>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null): Promise<{
 		id: string, owner?: string | Null, tags?: SerializedTx['tags'] | Null, signature: string, reward?: string | Null }>
 }> {}
-interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> { }
+interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
 
 
@@ -67,20 +69,20 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 		return tx
 	}
 
-	// async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
+	// async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | string): Promise<TransactionUploader> {
 	// 	// getUploader be a wallet method instead
 	// 	const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
 	// 	const arweave = Arweave.init(api) // init arweave instance to that endpoint
 	// 	return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
 	// }
 
-	async sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]) {
+	async sign(message: string, options: SignOptions) {
 		const res = await this.postMessage('sign', [message, options])
 		if (!is<FromArweaveProvider['sign']>(res)) { throw 'TypeError' }
 		return res
 	}
 
-	async decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]) {
+	async decrypt(message: string, options: DecryptOptions) {
 		const res = await this.postMessage('decrypt', [message, options])
 		if (!is<FromArweaveProvider['decrypt']>(res)) { throw 'TypeError' }
 		return res
@@ -93,6 +95,6 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
-	sign(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.sign>[0]) { return is<typeof message>(message) && is<typeof options>(options) }
-	decrypt(message: ArrayBuffer, options: Parameters<typeof window.crypto.subtle.decrypt>[0]) { return is<typeof message>(message) && is<typeof options>(options) }
+	sign(message: string, options: SignOptions) { return is<typeof message>(message) && is<typeof options>(options) }
+	decrypt(message: string, options: DecryptOptions) { return is<typeof message>(message) && is<typeof options>(options) }
 }
