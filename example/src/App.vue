@@ -195,7 +195,8 @@ function decode (buffer: BufferSource) {
 }
 
 const code = computed(() => [
-	`import { ArweaveWebWallet } from 'arweave-wallet-connector'
+`// npm install arweave-wallet-connector
+import { ArweaveWebWallet } from 'arweave-wallet-connector'
 const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
@@ -205,20 +206,20 @@ wallet.setUrl('${inputUrl.value}')`,
 
 
 
-	`const transaction = await arweave.createTransaction({
+`const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
 await wallet.signTransaction(transaction)`,
 
 
 
-	`// Uploading data to the wallet directly is not yet available
+`// Uploading data to the wallet directly is not yet available
 // using arweave.js in the meantime
 {
 ${txToString(transactionObject.value)}}`,
 
 
 
-	`let message = "${encryptionMessage.value}"
+`let message = "${encryptionMessage.value}"
 wallet.decrypt(message, { name: 'RSA-OAEP' })`,
 
 
