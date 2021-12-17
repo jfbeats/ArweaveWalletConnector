@@ -53,7 +53,7 @@
 				<CodeBox :code="`// Received error message\n${JSON.stringify(transactionError)}`" />
 			</div>
 			<div class="row">
-				<button class="button" @click="() => currentStep = 3">
+				<button class="button" @click="() => goTo(3)">
 					<Rule />
 					<span>Try out other methods</span>
 				</button>
@@ -154,7 +154,7 @@ const runEncryption = async () => {
 		const publicJWK = { kty: "RSA", e: "AQAB", n: await wallet.getPublicKey(), alg: "RSA-OAEP-256", ext: true }
 		const importedKey = await window.crypto.subtle.importKey('jwk', publicJWK, {...options, hash: 'SHA-256' }, false, ['encrypt'])
 		const encrypted = await window.crypto.subtle.encrypt(options, importedKey, encode(encryptionMessage.value)) as ArrayBuffer
-		encryptionMessage.value = await arweave.utils.bufferTob64Url(new Uint8Array(encrypted))
+		encryptionMessage.value = arweave.utils.bufferTob64Url(new Uint8Array(encrypted))
 		isEncrypted.value = true
 	}
 }
@@ -169,11 +169,12 @@ const runEncryption = async () => {
 // const location = window.location
 const inputUrl = ref(wallet.url)
 const currentStep = ref(0)
-watch(currentStep, async (val, oldVal) => {
-	if (val <= oldVal) { return }
+watch(currentStep, async (val, oldVal) => val > oldVal && goTo(val))
+const goTo = async (num: number) => {
+	currentStep.value = num
 	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
-	setTimeout(() => document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' }), 300)
-})
+	setTimeout(() => document.querySelector('#s' + num)?.scrollIntoView({ behavior: 'smooth' }), 300)
+}
 
 const displayNum = (num: any) => {
 	const FractionDigits = new Intl.NumberFormat(navigator.languages as any, { maximumFractionDigits: 3 }).format(num)
@@ -191,14 +192,6 @@ function encode (text: string) {
 function decode (buffer: BufferSource) {
 	const decoder = new TextDecoder()
 	return decoder.decode(buffer)
-}
-
-function decodeToBase64 (arrayBuffer: ArrayBuffer) {
-	return btoa(String.fromCharCode.apply(null, new Uint8Array(arrayBuffer) as any))
-}
-
-function encodeFromBase64 (base64: string){
-	return Uint8Array.from(atob(base64), c => c.charCodeAt(0))
 }
 
 const code = computed(() => [
