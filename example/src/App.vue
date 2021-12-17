@@ -3,8 +3,9 @@
 		<ArweaveOutlineLogo class="logo" />
 		<!-- link to: baseSourceUrl + /example/ + path -->
 		<WalletSelector v-model="inputUrl" class="wallet-selector" />
+		<CodeBox code="npm install arweave-wallet-connector" />
 		<CodeBox :code="code[0]" />
-		<div>The connector module itself has no visual element included. This page is an example on how it can be integrated</div>
+		<div style="text-align: justify; max-width: 800px;">The connector is a final link to permanent account managers. The system relies on no 3rd party and can connect any web page to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it. The connector module itself has no visual element included. This page is an example on how it can be integrated.</div>
 		<a class="button" href="https://github.com/jfbeats/ArweaveWalletConnector">
 			<Github />
 			<span>View on Github</span>
@@ -68,6 +69,13 @@
 				</button>
 			</div>
 			<CodeBox :code="code[3]" />
+			<div class="row">
+				<button class="button" @click="getArweaveConfig">
+					<Rule />
+					<span>Get Arweave Config</span>
+				</button>
+			</div>
+			<CodeBox :code="otherMethodResult || 'Result'" />
 		</section>
 	</div>
 </template>
@@ -161,6 +169,9 @@ const runEncryption = async () => {
 
 
 
+const otherMethodResult = ref(null as null | string)
+const getArweaveConfig = () => wallet.getArweaveConfig().then(res => otherMethodResult.value = JSON.stringify(res))
+
 
 
 
@@ -197,8 +208,7 @@ function decode (buffer: BufferSource) {
 }
 
 const code = computed(() => [
-`// npm install arweave-wallet-connector
-import { ArweaveWebWallet } from 'arweave-wallet-connector'
+`import { ArweaveWebWallet } from 'arweave-wallet-connector'
 const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
@@ -222,7 +232,8 @@ ${txToString(transactionObject.value)}}`,
 
 
 `let message = "${encryptionMessage.value}"
-wallet.decrypt(message, { name: 'RSA-OAEP' })`,
+anyRsaEncryptFunction(message, await wallet.getPublicKey())
+await wallet.decrypt(message, { name: 'RSA-OAEP' })`,
 
 
 
