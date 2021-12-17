@@ -169,11 +169,13 @@ const runEncryption = async () => {
 // const location = window.location
 const inputUrl = ref(wallet.url)
 const currentStep = ref(0)
-watch(currentStep, async (val, oldVal) => val > oldVal && goTo(val))
+watch(currentStep, async val => {
+	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
+	setTimeout(() => goTo(val), 300)
+})
 const goTo = async (num: number) => {
 	currentStep.value = num
-	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
-	setTimeout(() => document.querySelector('#s' + num)?.scrollIntoView({ behavior: 'smooth' }), 300)
+	document.querySelector('#s' + num)?.scrollIntoView({ behavior: 'smooth' })
 }
 
 const displayNum = (num: any) => {
