@@ -52,7 +52,22 @@
 			<div v-if="transactionError">
 				<CodeBox :code="`// Received error message\n${JSON.stringify(transactionError)}`" />
 			</div>
+			<div class="row">
+				<button class="button" @click="() => currentStep = 3">
+					<Rule />
+					<span>Try out other methods</span>
+				</button>
+			</div>
 			<div />
+		</section>
+		<section v-if="currentStep >= 3" id="s3">
+			<div class="row">
+				<button class="button" @click="runEncryption">
+					<Rule />
+					<span>{{ isEncrypted ? 'Decrypt' : 'Encrypt' }}</span>
+				</button>
+			</div>
+			<CodeBox :code="code[3]" />
 		</section>
 	</div>
 </template>
@@ -78,6 +93,8 @@ const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https'
 wallet.on('connect', () => currentStep.value = 1)
 wallet.on('disconnect', () => currentStep.value = 0)
 
+
+
 const arInput = ref('0.1')
 watch(arInput, (value) => transactionData.quantity = arweave.ar.arToWinston(value))
 const message = ref('hello world')
@@ -94,6 +111,7 @@ const transactionError = ref(null as any)
 const signTransaction = async () => {
 	transactionObject.value = null
 	transactionError.value = null
+	currentStep.value = 1
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
 		transaction.addTag('App-Name', +transactionData.quantity > 0 ? 'Donating to the dev' : 'Trying out the connector')
@@ -112,6 +130,8 @@ const signTransaction = async () => {
 	}
 }
 
+
+
 const postTransaction = async () => {
 	alert('waiting for arweave-js fix 😁')
 	// if (!transactionObject.value) { return }
@@ -120,6 +140,30 @@ const postTransaction = async () => {
 	// 	await uploader.uploadChunk()
 	// }
 }
+
+
+
+const isEncrypted = ref(false)
+const encryptionMessage = ref('You also have access to decryption and signing functions for arbitrary data')
+const runEncryption = async () => {
+	const options = { name: 'RSA-OAEP' }
+	if (isEncrypted.value) {
+		encryptionMessage.value = await wallet.decrypt(encryptionMessage.value, options)
+		isEncrypted.value = false
+	} else {
+		const publicJWK = { kty: "RSA", e: "AQAB", n: await wallet.getPublicKey(), alg: "RSA-OAEP-256", ext: true }
+		const importedKey = await window.crypto.subtle.importKey('jwk', publicJWK, {...options, hash: 'SHA-256' }, false, ['encrypt'])
+		const encrypted = await window.crypto.subtle.encrypt(options, importedKey, encode(encryptionMessage.value)) as ArrayBuffer
+		encryptionMessage.value = await arweave.utils.bufferTob64Url(new Uint8Array(encrypted))
+		isEncrypted.value = true
+	}
+}
+
+
+
+
+
+
 
 
 // const location = window.location
@@ -139,6 +183,24 @@ const displayNum = (num: any) => {
 
 const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${typeof e[1] === 'object' ? JSON.stringify(e[1]) : e[1]}'${e[0] == 'quantity' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
 
+function encode (text: string) {
+	const encoder = new TextEncoder()
+	return encoder.encode(text)
+}
+
+function decode (buffer: BufferSource) {
+	const decoder = new TextDecoder()
+	return decoder.decode(buffer)
+}
+
+function decodeToBase64 (arrayBuffer: ArrayBuffer) {
+	return btoa(String.fromCharCode.apply(null, new Uint8Array(arrayBuffer) as any))
+}
+
+function encodeFromBase64 (base64: string){
+	return Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+}
+
 const code = computed(() => [
 	`import { ArweaveWebWallet } from 'arweave-wallet-connector'
 const wallet = new ArweaveWebWallet({
@@ -149,13 +211,25 @@ const wallet = new ArweaveWebWallet({
 wallet.setUrl('${inputUrl.value}')`,
 
 
+
 	`const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
 await wallet.signTransaction(transaction)`,
 
 
-	`{
+
+	`// Uploading data to the wallet directly is not yet available
+// using arweave.js in the meantime
+{
 ${txToString(transactionObject.value)}}`,
+
+
+
+	`let message = "${encryptionMessage.value}"
+wallet.decrypt(message, { name: 'RSA-OAEP' })`,
+
+
+
 ])
 </script>
 
@@ -232,6 +306,7 @@ input {
 	padding: 0.5em;
 	margin: 0;
 	border: 0;
+	outline: 0;
 	border-bottom: 1px solid #ffffff22;
 }
 
