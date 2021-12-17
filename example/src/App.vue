@@ -10,12 +10,27 @@
 			<span>View on Github</span>
 		</a>
 		<div />
-		<section v-if="currentStep >= 1" id="s1" class="section">
+		<section v-if="currentStep >= 1" id="s1">
 			<div class="ellipsis">
-				<div>This page is now linked to {{ wallet.url }} with the selected address :</div>
+				<div>This page is now linked to {{ wallet.url }} and using the selected address :</div>
 				{{ wallet.address }}
 			</div>
-			<div style="display: flex; justify-content: center;">
+			<div>
+				<div style="display: flex; align-items: center;">
+					<span>Optionally donate :</span>
+					<div style="display: inline-block; width: 0.5em;" />
+					<input v-model="arInput" style="width: 4em; text-align: center;" />
+					<div style="display: inline-block; width: 0.5em;" />
+					<span>AR</span>
+				</div>
+				<div style="height: 0.5em;" />
+				<div style="display: flex; align-items: center;">
+					<span>Message :</span>
+					<div style="display: inline-block; width: 0.5em;" />
+					<input v-model="message" style="flex: 1 1 0;" />
+				</div>
+			</div>
+			<div class="row">
 				<button class="button" v-if="wallet.address" @click="signTransaction">
 					<Rule />
 					<span>Sign Transaction</span>
@@ -24,54 +39,93 @@
 			<CodeBox :code="code[1]" />
 			<div />
 		</section>
+		<section v-if="currentStep >= 2" id="s2">
+			<template v-if="transactionObject">
+				<div class="row">
+					<button class="button" @click="postTransaction">
+						<Upload />
+						<span>Upload Transaction</span>
+					</button>
+				</div>
+				<CodeBox :code="code[2]" />
+			</template>
+			<div v-if="transactionError">
+				<CodeBox :code="`// Received error message\n${JSON.stringify(transactionError)}`" />
+			</div>
+			<div />
+		</section>
 	</div>
 </template>
 
 
 
 <script setup lang="ts">
-import ArweaveOutlineLogo from './components/ArweaveOutlineLogo.vue'
+import ArweaveOutlineLogo from './components/icons/ArweaveOutlineLogo.vue'
 import WalletSelector from './components/WalletSelector.vue'
 import CodeBox from './components/CodeBox.vue'
-import Github from './components/IconGithub.vue'
-import Rule from './components/IconRule.vue'
+import Github from './components/icons/Github.vue'
+import Rule from './components/icons/Rule.vue'
+import Upload from './components/icons/Upload.vue'
 import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
 
 // Here, we import an instance of a wrapper class made for the Vue
 // reactivity engine instead of importing the connector directly
 import { wallet } from './ReactiveWallet'
+import Transaction from 'arweave/web/lib/transaction'
 
 const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
+wallet.on('connect', () => currentStep.value = 1)
+wallet.on('disconnect', () => currentStep.value = 0)
 
+const arInput = ref('0.1')
+watch(arInput, (value) => transactionData.quantity = arweave.ar.arToWinston(value))
+const message = ref('hello world')
+watch(message, (value) => transactionData.data = value)
 const transactionData = reactive({
-	quantity: '100000000000',
 	target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
-	data: 'hello world',
+	quantity: arweave.ar.arToWinston(arInput.value),
+	data: message.value,
 })
 
+const transactionObject = ref(null as null | Transaction)
+const transactionError = ref(null as any)
+
 const signTransaction = async () => {
+	transactionObject.value = null
+	transactionError.value = null
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
-		transaction.addTag('App-Name', 'Donate to the developer')
+		transaction.addTag('App-Name', +transactionData.quantity > 0 ? 'Donating to the dev' : 'Trying out the connector')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
-		transaction.addTag('Tag-3', 'it will only be sent by clicking accept')
+		transaction.addTag('Tag-3', 'you can sign it here and not send it on the next page')
 		await wallet.signTransaction(transaction)
-	} catch (e) { console.error(e); wallet.error = e as string }
+		console.log(transaction)
+		transactionObject.value = transaction
+		currentStep.value = 2
+	} catch (e) {
+		console.error(e)
+		wallet.error = e as string
+		transactionError.value = e
+		currentStep.value = 2
+	}
+}
+
+const postTransaction = async () => {
+	alert('waiting for arweave-js fix 😁')
+	return
+	if (!transactionObject.value) { return }
+	const uploader = await arweave.transactions.getUploader(transactionObject.value)
+	while (!uploader.isComplete) {
+		await uploader.uploadChunk()
+	}
 }
 
 
 // const location = window.location
 const inputUrl = ref(wallet.url)
-const currentStep = computed(() => {
-	const conditions = [
-		wallet.address
-	]
-	let step = 0
-	while (conditions[step]) { step++ }
-	return step
-})
+const currentStep = ref(0)
 watch(currentStep, async (val, oldVal) => {
 	if (val <= oldVal) { return }
 	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
@@ -84,7 +138,7 @@ const displayNum = (num: any) => {
 	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits
 }
 
-const txToString = (obj: any) => Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${e[1]}'${e[0] == 'quantity' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
+const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${typeof e[1] === 'object' ? JSON.stringify(e[1]) : e[1]}'${e[0] == 'quantity' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
 
 const code = computed(() => [
 	`import { ArweaveWebWallet } from 'arweave-wallet-connector'
@@ -95,9 +149,14 @@ const wallet = new ArweaveWebWallet({
 
 wallet.setUrl('${inputUrl.value}')`,
 
+
 	`const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
 await wallet.signTransaction(transaction)`,
+
+
+	`{
+${txToString(transactionObject.value)}}`,
 ])
 </script>
 
@@ -131,7 +190,7 @@ await wallet.signTransaction(transaction)`,
 	margin-block-start: var(--app-spacing);
 }
 
-.section {
+section {
 	min-height: 100vh;
 	width: 100%;
 	max-width: 800px;
@@ -140,12 +199,21 @@ await wallet.signTransaction(transaction)`,
 	justify-content: center;
 }
 
-.section > *:first-child {
+section > *:first-child {
 	margin-top: calc(var(--app-spacing) * 2 + 5em);
 }
 
-.section > * + * {
+section > * + * {
 	margin-block-start: var(--app-spacing);
+}
+
+.row {
+	display: flex;
+	justify-content: center;
+}
+
+.row > * + * {
+	margin-inline-start: var(--app-spacing);
 }
 
 .logo {
@@ -157,6 +225,15 @@ await wallet.signTransaction(transaction)`,
 	position: sticky;
 	top: var(--app-spacing);
 	z-index: 1;
+}
+
+input {
+	color: inherit;
+	background: transparent;
+	padding: 0.5em;
+	margin: 0;
+	border: 0;
+	border-bottom: 1px solid #ffffff22;
 }
 
 button {
@@ -182,6 +259,11 @@ button {
 	align-items: center;
 	box-shadow: 5px 5px 20px #070707, -5px -5px 20px #1b1b1b;
 	transition: 1s ease;
+	justify-content: center;
+}
+
+.button:hover {
+	background: #282828;
 }
 
 .button:active {
