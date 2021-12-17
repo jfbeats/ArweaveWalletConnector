@@ -114,12 +114,11 @@ const signTransaction = async () => {
 
 const postTransaction = async () => {
 	alert('waiting for arweave-js fix 😁')
-	return
-	if (!transactionObject.value) { return }
-	const uploader = await arweave.transactions.getUploader(transactionObject.value)
-	while (!uploader.isComplete) {
-		await uploader.uploadChunk()
-	}
+	// if (!transactionObject.value) { return }
+	// const uploader = await arweave.transactions.getUploader(transactionObject.value)
+	// while (!uploader.isComplete) {
+	// 	await uploader.uploadChunk()
+	// }
 }
 
 
