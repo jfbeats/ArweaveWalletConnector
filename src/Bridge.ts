@@ -1,6 +1,6 @@
 import { is } from 'typescript-is'
 
-import Emitter from './Emitter'
+import Emitter from './Emitter.js'
 
 type ChannelController = {
 	window?: Window | null,

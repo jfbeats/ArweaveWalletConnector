@@ -1,5 +1,5 @@
-import Emitter from './Emitter'
-import Bridge, { Emitting as InternalBridgeMap } from './Bridge'
+import Emitter from './Emitter.js'
+import Bridge, { Emitting as InternalBridgeMap } from './Bridge.js'
 import { is } from 'typescript-is'
 import { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
 

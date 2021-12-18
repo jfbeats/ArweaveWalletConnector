@@ -1,2 +1,2 @@
 export type { AppInfo } from './types'
-export { ArweaveWebWallet } from './ArweaveWebWallet'
+export { ArweaveWebWallet } from './ArweaveWebWallet.js'

@@ -1,4 +1,4 @@
-import Connector from './Connector'
+import Connector from './Connector.js'
 import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override, Null, AppInfo } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
