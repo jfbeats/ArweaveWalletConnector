@@ -20,8 +20,8 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	sign(message: string, options: SignOptions): Promise<string>
-	decrypt(message: string, options: DecryptOptions): Promise<string>
+	sign(message: ArrayBufferView, options: SignOptions): Promise<ArrayBufferView>
+	decrypt(message: ArrayBufferView, options: DecryptOptions): Promise<ArrayBufferView>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
@@ -76,16 +76,18 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 	// 	return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
 	// }
 
-	async sign(message: string, options: SignOptions) {
+	async sign<T extends ArrayBufferView>(message: T, options: SignOptions) {
 		const res = await this.postMessage('sign', [message, options])
-		if (!is<FromArweaveProvider['sign']>(res)) { throw 'TypeError' }
-		return res
+		if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+		const constructor = message.constructor as new (p: any) => typeof message
+		return new constructor(res.buffer)
 	}
 
-	async decrypt(message: string, options: DecryptOptions) {
+	async decrypt<T extends ArrayBufferView>(message: T, options: DecryptOptions) {
 		const res = await this.postMessage('decrypt', [message, options])
-		if (!is<FromArweaveProvider['decrypt']>(res)) { throw 'TypeError' }
-		return res
+		if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+		const constructor = message.constructor as new (p: any) => typeof message
+		return new constructor(res.buffer)
 	}
 }
 
@@ -95,6 +97,6 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
-	sign(message: string, options: SignOptions) { return is<typeof message>(message) && is<typeof options>(options) }
-	decrypt(message: string, options: DecryptOptions) { return is<typeof message>(message) && is<typeof options>(options) }
+	sign(message: ArrayBufferView, options: SignOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
+	decrypt(message: ArrayBufferView, options: DecryptOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 }

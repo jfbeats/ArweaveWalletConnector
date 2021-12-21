@@ -153,16 +153,18 @@ const postTransaction = async () => {
 
 const isEncrypted = ref(false)
 const encryptionMessage = ref('You also have access to decryption and signing functions for arbitrary data')
+let encryptionBuffer = arweave.utils.stringToBuffer(encryptionMessage.value)
 const runEncryption = async () => {
 	const options = { name: 'RSA-OAEP' }
 	if (isEncrypted.value) {
-		encryptionMessage.value = await wallet.decrypt(encryptionMessage.value, options)
+		encryptionBuffer = await wallet.decrypt(new Uint8Array(encryptionBuffer!), options)
+		encryptionMessage.value = decode(encryptionBuffer)
 		isEncrypted.value = false
 	} else {
 		const publicJWK = { kty: "RSA", e: "AQAB", n: await wallet.getPublicKey(), alg: "RSA-OAEP-256", ext: true }
 		const importedKey = await window.crypto.subtle.importKey('jwk', publicJWK, {...options, hash: 'SHA-256' }, false, ['encrypt'])
-		const encrypted = await window.crypto.subtle.encrypt(options, importedKey, encode(encryptionMessage.value)) as ArrayBuffer
-		encryptionMessage.value = arweave.utils.bufferTob64Url(new Uint8Array(encrypted))
+		encryptionBuffer = await window.crypto.subtle.encrypt(options, importedKey, encryptionBuffer)
+		encryptionMessage.value = encodeURI(decode(encryptionBuffer))
 		isEncrypted.value = true
 	}
 }
