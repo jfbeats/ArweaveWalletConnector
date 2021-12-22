@@ -18,9 +18,16 @@
 			</div>
 			<div>
 				<div style="display: flex; align-items: center;">
-					<span>Optionally donate :</span>
+					<span>Address :</span>
 					<div style="display: inline-block; width: 0.5em;" />
-					<input v-model="arInput" style="width: 4em; text-align: center;" />
+					<input v-model="transactionData.target" style="flex: 1 1 0; text-align: right;" />
+				</div>
+				<div style="height: 0.5em;" />
+				<div style="display: flex; align-items: center;">
+					<span v-if="transactionData.target === 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE'">Donate? :</span>
+					<span v-else>Send :</span>
+					<div style="display: inline-block; width: 0.5em;" />
+					<input v-model="arInput" style="flex: 1 1 0; text-align: right;" />
 					<div style="display: inline-block; width: 0.5em;" />
 					<span>AR</span>
 				</div>
@@ -28,7 +35,7 @@
 				<div style="display: flex; align-items: center;">
 					<span>Message :</span>
 					<div style="display: inline-block; width: 0.5em;" />
-					<input v-model="message" style="flex: 1 1 0;" />
+					<input v-model="message" style="flex: 1 1 0; text-align: right;" />
 				</div>
 			</div>
 			<div class="row">
@@ -104,9 +111,11 @@ wallet.on('disconnect', () => currentStep.value = 0)
 
 
 const arInput = ref('0.1')
-watch(arInput, (value) => transactionData.quantity = arweave.ar.arToWinston(value))
+// using the price of 500MB as default transaction amount
+arweave.transactions.getPrice(1024*1024*512).then(price => arInput.value = displayNum(arweave.ar.winstonToAr(price)))
+watch(arInput, value => transactionData.quantity = arweave.ar.arToWinston(value))
 const message = ref('hello world')
-watch(message, (value) => transactionData.data = value)
+watch(message, value => transactionData.data = value)
 const transactionData = reactive({
 	target: 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE',
 	quantity: arweave.ar.arToWinston(arInput.value),
@@ -192,12 +201,12 @@ const goTo = async (num: number) => {
 }
 
 const displayNum = (num: any) => {
-	const FractionDigits = new Intl.NumberFormat(navigator.languages as any, { maximumFractionDigits: 3 }).format(num)
-	const SignificantDigits = new Intl.NumberFormat(navigator.languages as any, { maximumSignificantDigits: 1 }).format(num)
-	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits
+	const FractionDigits = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(num)
+	const SignificantDigits = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 1 }).format(num)
+	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits as any
 }
 
-const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: '${typeof e[1] === 'object' ? JSON.stringify(e[1]) : e[1]}'${e[0] == 'quantity' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
+const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: ${typeof e[1] === 'object' ? JSON.stringify(e[1]) : `'` + e[1] + `'`}${e[0] == 'quantity' || e[0] == 'reward' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
 
 function encode (text: string) {
 	const encoder = new TextEncoder()
@@ -233,7 +242,7 @@ ${txToString(transactionObject.value)}}`,
 
 
 
-`let message = "${encryptionMessage.value}"
+`let message = '${encryptionMessage.value}'
 anyRsaEncryptFunction(message, await wallet.getPublicKey())
 await wallet.decrypt(message, { name: 'RSA-OAEP' })`,
 
