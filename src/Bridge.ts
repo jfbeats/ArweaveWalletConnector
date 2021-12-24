@@ -116,6 +116,7 @@ export default class Bridge extends Emitter<Emitting> {
 		if (this._iframeEl) { return }
 		this._iframeEl = document.createElement('iframe')
 		this._iframeEl.src = this._url.toString()
+		this._iframeEl.allow = 'usb'
 		this._iframeEl.style.display = 'none'
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
 		this._iframe.promise = promise

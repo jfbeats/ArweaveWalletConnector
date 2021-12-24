@@ -52,7 +52,8 @@
 				<div class="row">
 					<button class="button" @click="postTransaction">
 						<Upload />
-						<span>Upload Transaction</span>
+						<span v-if="!transactionUpload">Upload Transaction</span>
+						<span v-else>Uploaded ({{ transactionUpload }})</span>
 					</button>
 				</div>
 				<CodeBox :code="code[2]" />
@@ -124,19 +125,20 @@ const transactionData = reactive({
 
 const transactionObject = ref(null as null | Transaction)
 const transactionError = ref(null as any)
+const transactionUpload = ref(null as null | number)
 
 const signTransaction = async () => {
 	transactionObject.value = null
 	transactionError.value = null
+	transactionUpload.value = null
 	currentStep.value = 1
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
-		transaction.addTag('App-Name', +transactionData.quantity > 0 ? 'Donating to the dev' : 'Trying out the connector')
+		transaction.addTag('App-Name', +transactionData.quantity > 0 && transactionData.target === 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE' ? 'Donating to the dev' : 'Trying out the connector')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
 		transaction.addTag('Tag-3', 'you can sign it here and not send it on the next page')
 		await wallet.signTransaction(transaction)
-		console.log(transaction)
 		transactionObject.value = transaction
 		currentStep.value = 2
 	} catch (e) {
@@ -150,12 +152,12 @@ const signTransaction = async () => {
 
 
 const postTransaction = async () => {
-	alert('waiting for arweave-js fix 😁')
-	// if (!transactionObject.value) { return }
-	// const uploader = await arweave.transactions.getUploader(transactionObject.value)
-	// while (!uploader.isComplete) {
-	// 	await uploader.uploadChunk()
-	// }
+	if (!transactionObject.value) { return }
+	const uploader = await arweave.transactions.getUploader(transactionObject.value)
+	while (!uploader.isComplete) {
+		try { await uploader.uploadChunk() } catch (e) { console.error(e) }
+	}
+	transactionUpload.value = uploader.lastResponseStatus
 }
 
 
