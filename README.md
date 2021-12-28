@@ -1,7 +1,34 @@
 # Arweave Wallet Connector
 
-WIP
+WIP - API may change
 
 ## Demo
 
+The connector module itself has no visual element included. Here is how users can interract with it:
 https://jfbeats.github.io/ArweaveWalletConnector/
+
+## Info
+
+The connector is a final link to permanent account managers. The system relies on no 3rd party and can connect any web page to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it.
+
+## How to use
+
+As of now [arweave.app](https://arweave.app) is the only provider so it is recommended to have it as default
+
+```js
+npm i arweave-wallet-connector
+
+import { ArweaveWebWallet } from 'arweave-wallet-connector'
+
+const wallet = new ArweaveWebWallet({
+	name: 'Your application name',
+	logo: 'Url of your logo to be displayed to users'
+})
+wallet.setUrl('Url of the wallet provider to connect to')
+```
+
+### For Vue developpers
+
+[Reactive wrapper for the Wallet class](example/src/ReactiveWallet.ts)
+
+[Address bar component](example/src/components/WalletSelector.vue)
