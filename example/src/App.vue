@@ -175,7 +175,7 @@ const runEncryption = async () => {
 		const publicJWK = { kty: "RSA", e: "AQAB", n: await wallet.getPublicKey(), alg: "RSA-OAEP-256", ext: true }
 		const importedKey = await window.crypto.subtle.importKey('jwk', publicJWK, {...options, hash: 'SHA-256' }, false, ['encrypt'])
 		encryptionBuffer = await window.crypto.subtle.encrypt(options, importedKey, encryptionBuffer)
-		encryptionMessage.value = encodeURI(decode(encryptionBuffer))
+		encryptionMessage.value = arweave.utils.bufferTob64(encryptionBuffer)
 		isEncrypted.value = true
 	}
 }

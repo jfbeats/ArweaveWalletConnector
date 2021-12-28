@@ -106,7 +106,7 @@ export default class Bridge extends Emitter<Emitting> {
 	postMessage(message: object, timeout?: number) {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
-			.finally(() => !this._pending.length && this.closePopup())
+			.finally(() => this.completeRequest())
 		this.deliverMessage({ ...message, id })
 		if (timeout) { setTimeout(() => this._promiseController[id].reject('timeout'), timeout) }
 		return promise
@@ -164,7 +164,7 @@ export default class Bridge extends Emitter<Emitting> {
 		this._popup = {}
 	}
 
-	completeRequest() { !this._pending.length && this.closePopup() }
+	completeRequest() { setTimeout(() => !this._pending.length && this.closePopup(), 100) }
 
 	deliverMessage(message: any) {
 		if (!this._url) { throw 'Missing URL' }
