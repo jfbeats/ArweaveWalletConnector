@@ -1,0 +1,38 @@
+html {
+	background: #111;
+	box-sizing: border-box;
+	line-height: 2;
+	scroll-snap-type: y mandatory;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+
+#app {
+	font-family: Avenir, Helvetica, Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-align: center;
+	color: #ddd;
+}
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
+}
+
+.no-scrollbar {
+	scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+.ellipsis {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
