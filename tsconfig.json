@@ -16,10 +16,6 @@
 		"isolatedModules": true,
 		"sourceMap": true,
 		"inlineSourceMap": false,
-		"lib": [
-			"esnext",
-			"dom"
-		],
 		"moduleResolution": "node",
 		"pretty": true,
 		"resolveJsonModule": true,

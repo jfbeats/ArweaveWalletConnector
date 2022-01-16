@@ -21,26 +21,26 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	private _bridge?: Bridge
 	private _session = 0
 	private _address?: string
-	private _listener
+	private _listener = (message: InternalBridgeMap['message']) => {
+		const { method, params, session } = message
+		if (session != null && this._session != session) { return }
+		if (!session && this._session) { return }
+		if (method === 'connect') {
+			if (!is<string>(params)) { return }
+			if (this._address === params) { return }
+			this._address = params
+			this.emit('connect', params)
+			this.emit('change', params)
+		}
+		if (method === 'disconnect') { this.disconnectEvent(false) }
+	}
 	private _emitterPassthrough
 
 	constructor(protocolInfo?: ProtocolInfo, appInfo?: AppInfo, connectToUrl?: string | URL) {
 		super()
 		this._protocolInfo = protocolInfo
 		this._appInfo = appInfo
-		this._listener = (message: InternalBridgeMap['message']) => {
-			const { method, params, session } = message
-			if (session != null && this._session != session) { return }
-			if (!session && this._session) { return }
-			if (method === 'connect') {
-				if (!is<string>(params)) { return }
-				if (this._address === params) { return }
-				this._address = params
-				this.emit('connect', params)
-				this.emit('change', params)
-			}
-			if (method === 'disconnect') { this.disconnectEvent(false) }
-		}
+
 		this._emitterPassthrough = <T extends keyof BridgeMap>(param: InternalBridgeMap['builtin']) => {
 			const event = Object.entries(param)[0] as [T, BridgeMap[T]]
 			this.emit(event[0], event[1])
