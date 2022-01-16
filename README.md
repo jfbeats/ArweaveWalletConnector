@@ -9,7 +9,7 @@ https://jfbeats.github.io/ArweaveWalletConnector/
 
 ## Info
 
-The connector is a final link to permanent account managers. The system relies on no 3rd party and can connect any web page to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it.
+The connector is a final link to permanent account managers. Users are not required to install anything and are not restricted to specific device types or operating systems. The protocol is context agnostic and can therefore be used on desktop, mobile or anything else that includes a web browser. The system relies on no 3rd party and, once implemented, enables any web page to connect to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it.
 
 ## How to use
 
