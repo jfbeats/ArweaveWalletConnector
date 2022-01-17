@@ -1,6 +1,7 @@
 import { is } from 'typescript-is'
 
 import Emitter from './Emitter.js'
+import type { AppInfo } from "./types"
 
 type ChannelController = {
 	window?: Window | null,
@@ -21,7 +22,8 @@ export type Emitting = {
 
 export default class Bridge extends Emitter<Emitting> {
 	private _url: URL
-	private _appInfo?: object
+	private _appInfo?: AppInfo
+	private _iframeParentNode: Node
 	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
 	private _popup: ChannelController = {}
@@ -33,16 +35,22 @@ export default class Bridge extends Emitter<Emitting> {
 	}[] = []
 	private _pending: number[] = []
 
-	    constructor(connectToUrl: URL, appInfo?: object) {
+	constructor(connectToUrl: URL, appInfo?: AppInfo) {
         super()
         this._appInfo = appInfo
         this._iframeParentNode = appInfo?.iframeParentNode || document.body
 		this._url = connectToUrl
-		this._url.hash = new URLSearchParams({
+		
+		const urlInfo = {
 			origin: window.location.origin,
-			...this._appInfo,
 			session: Math.random().toString().slice(2)
-		}).toString()
+		} as any
+		
+		if (appInfo?.name) { urlInfo.name = appInfo.name }
+		if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
+
+		this._url.hash = new URLSearchParams(urlInfo).toString()
+
 		window.addEventListener('message', this.listener)
 		this.openIframe()
 	}
