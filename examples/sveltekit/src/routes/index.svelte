@@ -3,6 +3,10 @@
 
 	import { onMount } from 'svelte';
 	import Wallet from '$lib/Wallet.svelte';
+	import { dev } from '$app/env';
+
+	export let inputUrl = dev ? 'http://localhost:8089' : 'https://arweave.app';
+
 	let mounted;
 	onMount(() => {
 		mounted = true;
@@ -10,9 +14,9 @@
 </script>
 
 <div class="app" id="app">
-	<h1>Welcome to SvelteKit - Arweave Wallet Connector</h1>
+	<h1>Welcome to SvelteKit - Web3 Wallet Connector</h1>
 	{#if mounted}
-		<Wallet />
+		<Wallet {inputUrl} />
 	{/if}
 </div>
 

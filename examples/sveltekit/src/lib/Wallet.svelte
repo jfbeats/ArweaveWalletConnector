@@ -2,20 +2,21 @@
 	// svelte stuff
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { dev } from '$app/env';
 	import { draggable } from 'svelte-drag';
 
 	// wallet imports
 	import { ArweaveWebWallet } from 'arweave-wallet-connector';
 	import IconButton from './components/WalletSelectorIcons.svelte';
 
-	export let inputUrl = dev ? 'http://localhost:8080' : 'https://arweave.app';
+	export let inputUrl = 'http://localhost:8080/';
 
 	let wallet;
 	let focused;
+	let iframeParentNode: Node;
 
 	onMount(() => {
 		wallet = new ArweaveWebWallet({
+			iframeParentNode,
 			name: 'Connector Example',
 			logo: `${location?.href}placeholder.svg`
 		});
@@ -86,6 +87,10 @@
 			>
 		</div>
 	</div>
+</div>
+
+<div bind:this={iframeParentNode}>
+	<!-- iframe popups go here -->
 </div>
 
 <style>
