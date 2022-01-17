@@ -1,5 +1,5 @@
 html {
-	background: #111;
+	background: rgb(241, 241, 241);
 	box-sizing: border-box;
 	line-height: 2;
 	scroll-snap-type: y mandatory;
@@ -15,7 +15,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-align: center;
-	color: #ddd;
+	color: rgb(109, 109, 109);
 }
 
 *,

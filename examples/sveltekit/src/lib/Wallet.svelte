@@ -3,13 +3,16 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { dev } from '$app/env';
+	import { draggable } from 'svelte-drag';
 
 	// wallet imports
 	import { ArweaveWebWallet } from 'arweave-wallet-connector';
 	import IconButton from './components/WalletSelectorIcons.svelte';
 
-	let inputUrl = dev ? 'http://localhost:8080' : 'https://arweave.app';
+	export let inputUrl = dev ? 'http://localhost:8080' : 'https://arweave.app';
+
 	let wallet;
+	let focused;
 
 	onMount(() => {
 		wallet = new ArweaveWebWallet({
@@ -38,10 +41,23 @@
 
 	$: popupIcon = wallet?.keepPopup ? 'close' : 'launch';
 	$: connectionIcon = wallet?.address ? 'unplug' : 'plug';
+
+	function handleKeydown(event) {
+		if (event.key === 'Enter' && focused) connect();
+	}
 </script>
 
-<div class="url-input">
-	<input class="url" {placeholder} on:keydown={connect} bind:value={inputUrl} />
+<svelte:window on:keydown={handleKeydown} />
+
+<div class="url-input" use:draggable>
+	<input
+		class="url"
+		{placeholder}
+		on:focus={() => (focused = true)}
+		on:blur={() => (focused = false)}
+		bind:value={inputUrl}
+		style={`--input-width: ${Array.from(inputUrl).length}em;`}
+	/>
 	<div class="actions">
 		{#if wallet?.address}
 			<div
@@ -74,15 +90,23 @@
 
 <style>
 	.url-input {
+		position: fixed;
+		top: var(--spacing);
+		right: var(--spacing);
 		background: #161616;
 		border: 0.5px solid #333;
 		display: flex;
 		align-items: stretch;
 		border-radius: 8px;
-		width: 100%;
-		min-width: 0;
+		width: auto;
+		min-width: 20em;
 		max-width: 800px;
-		--spacing: 2em;
+		--spacing: 1em;
+		padding: var(--spacing);
+		filter: drop-shadow(2px 4px 6px rgba(133, 133, 133, 0.5));
+	}
+	.url-input:hover {
+		cursor: move;
 	}
 
 	.url {
@@ -118,11 +142,13 @@
 
 	input {
 		flex: 1 1 0;
-		color: inherit;
+		color: whitesmoke;
 		background: none;
 		border: none;
 		margin: 0;
 		padding: 0;
 		font-size: 1em;
+		width: var(--input-width);
+		min-width: 40ch;
 	}
 </style>
