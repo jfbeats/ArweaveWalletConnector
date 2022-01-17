@@ -1,7 +1,10 @@
-import { is } from 'typescript-is'
-
 import Emitter from './Emitter.js'
+<<<<<<< HEAD
 import type { AppInfo } from "./types"
+=======
+import { is } from 'typescript-is'
+import type { AppInfo } from './types.js'
+>>>>>>> a2158f2ea6f02ee0efa45fe83790932ceb07638b
 
 type ChannelController = {
 	window?: Window | null,
@@ -22,7 +25,10 @@ export type Emitting = {
 
 export default class Bridge extends Emitter<Emitting> {
 	private _url: URL
+<<<<<<< HEAD
 	private _appInfo?: AppInfo
+=======
+>>>>>>> a2158f2ea6f02ee0efa45fe83790932ceb07638b
 	private _iframeParentNode: Node
 	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
@@ -37,20 +43,28 @@ export default class Bridge extends Emitter<Emitting> {
 
 	constructor(connectToUrl: URL, appInfo?: AppInfo) {
         super()
-        this._appInfo = appInfo
         this._iframeParentNode = appInfo?.iframeParentNode || document.body
 		this._url = connectToUrl
+<<<<<<< HEAD
 		
+=======
+>>>>>>> a2158f2ea6f02ee0efa45fe83790932ceb07638b
 		const urlInfo = {
 			origin: window.location.origin,
 			session: Math.random().toString().slice(2)
 		} as any
+<<<<<<< HEAD
 		
 		if (appInfo?.name) { urlInfo.name = appInfo.name }
 		if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
 
 		this._url.hash = new URLSearchParams(urlInfo).toString()
 
+=======
+		if (appInfo?.name) { urlInfo.name = appInfo.name }
+		if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
+		this._url.hash = new URLSearchParams(urlInfo).toString()
+>>>>>>> a2158f2ea6f02ee0efa45fe83790932ceb07638b
 		window.addEventListener('message', this.listener)
 		this.openIframe()
 	}
