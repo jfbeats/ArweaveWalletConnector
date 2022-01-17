@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "name": "arweave-wallet-connector",
     "version": "0.0.17",
     "description": "WIP",
@@ -27,3 +28,32 @@
         "typescript": "^4.5.3"
     }
 }
+=======
+	"name": "arweave-wallet-connector",
+	"version": "0.0.18",
+	"description": "WIP",
+	"type": "module",
+	"module": "lib/index.js",
+	"main": "lib/index.js",
+	"files": [
+		"lib/**/*"
+	],
+	"scripts": {
+		"build": "ttsc && node build.js",
+		"prepare": "npm run build",
+		"dev": "npm run build && cd example && npm run dev"
+	},
+	"license": "ISC",
+	"dependencies": {
+		"mitt": "^3.0.0",
+		"typescript-is": "^0.19.0"
+	},
+	"devDependencies": {
+		"arweave": "^1.10.18",
+		"esbuild": "^0.13.14",
+		"rimraf": "^3.0.2",
+		"ttypescript": "^1.5.12",
+		"typescript": "^4.5.3"
+	}
+}
+>>>>>>> cb50e15bcf96c701d37f0ba82d935d2f98413a5f

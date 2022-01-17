@@ -1,4 +1,5 @@
 import Connector from './Connector.js'
+import { load, unload } from './Inject.js'
 import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override, Null, AppInfo } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
@@ -37,8 +38,27 @@ type Emitting = {}
 
 
 export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInterface {
+	namespaces = {
+		arweaveWallet: {
+			connect: () => this.connect(),
+			disconnect: () => this.disconnect(),
+			getActiveAddress: () => this.address,
+			getActivePublicKey: () => this.getPublicKey(),
+			getAllAddresses: () => { throw 'not implemented' },
+			getWalletNames: () => { throw 'not implemented' },
+			sign: (tx: Transaction, options?: any) => this.signTransaction(tx, options),
+			encrypt: () => { throw 'not implemented' },
+			decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
+			signature: (data: Uint8Array, options: any) => this.sign(data, options),
+			getPermissions: () => { throw 'not implemented' },
+			getArweaveConfig: () => this.getArweaveConfig(),
+		},
+	}
+	
 	constructor(appInfo?: AppInfo, url?: string) {
 		super({ protocol: 'arweave', version: '1.0.0' }, { ...appInfo }, url)
+		this.on('connect', () => load(this))
+		this.on('disconnect', () => unload(this))
 	}
 
 	async getPublicKey() {

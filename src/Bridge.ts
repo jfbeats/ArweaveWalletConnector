@@ -59,9 +59,10 @@ export default class Bridge extends Emitter<Emitting> {
 
 
 	private listener = (e: MessageEvent) => {
+		if (e.source !== this._popup.window && e.source !== this._iframe?.window) { return }
+		if (e.origin !== this._url?.origin) { return }
 		if (typeof e.data !== 'object') { return }
 		const { method, params, id, result, error, session } = e.data as { [key: string]: unknown }
-		if (e.source !== this._popup.window && e.source !== this._iframe?.window || e.origin !== this._url?.origin) { return }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
 		if (id != null) {
 			if (typeof id !== 'number' && typeof id !== 'string') { return }
@@ -96,6 +97,8 @@ export default class Bridge extends Emitter<Emitting> {
 		if (!is<Emitting['message']>(emitting)) { return console.warn('dropped') }
 		this.emit('message', emitting)
 	}
+
+
 
 	disconnect(options?: object) {
 		this.closeIframe()
@@ -170,12 +173,12 @@ export default class Bridge extends Emitter<Emitting> {
 		if (!this._url) { throw 'Missing URL' }
 		const fullMessage = { ...message, jsonrpc: '2.0' }
 		this.openIframe()
-		this._iframe.promise = this._iframe.promise!
-			.then(() => this._iframe.window?.postMessage(fullMessage, this._url.origin))
+		this._iframe.promise = this._iframe.promise
+			?.then(() => this._iframe.window?.postMessage(fullMessage, this._url.origin))
 			.catch(() => { return })
 		this.openPopup()
-		this._popup.promise = this._popup.promise!
-			.then(() => fullMessage.id != null && this._pending.push(fullMessage.id))
+		this._popup.promise = this._popup.promise
+			?.then(() => fullMessage.id != null && this._pending.push(fullMessage.id))
 			.then(() => this._popup.window?.postMessage(fullMessage, this._url.origin))
 			.catch(() => { return })
 	}
