@@ -22,9 +22,11 @@ import { ArweaveWebWallet } from 'arweave-wallet-connector'
 
 const wallet = new ArweaveWebWallet({
 	name: 'Your application name',
-	logo: 'Url of your logo to be displayed to users'
+	logo: 'Url of your logo to be displayed to users',
+	iframeParentNode: document.body // <--- default, the [Node](https://developer.mozilla.org/en-US/docs/Web/API/Node) you can optionally choose to attach the embedded iframe
 })
 wallet.setUrl('Url of the wallet provider to connect to')
+
 ```
 
 ### For Vue developpers
