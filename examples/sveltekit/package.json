@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"scripts": {
 		"dev": "svelte-kit dev --port=39876",
 		"build": "svelte-kit build",
