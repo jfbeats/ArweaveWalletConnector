@@ -33,9 +33,10 @@ export default class Bridge extends Emitter<Emitting> {
 	}[] = []
 	private _pending: number[] = []
 
-	constructor(connectToUrl: URL, appInfo?: object) {
-		super()
-		this._appInfo = appInfo
+	    constructor(connectToUrl: URL, appInfo?: object) {
+        super()
+        this._appInfo = appInfo
+        this._iframeParentNode = appInfo?.iframeParentNode || document.body
 		this._url = connectToUrl
 		this._url.hash = new URLSearchParams({
 			origin: window.location.origin,
@@ -124,7 +125,7 @@ export default class Bridge extends Emitter<Emitting> {
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
 		this._iframe.promise = promise
 		const injectIframe = () => {
-			document.body.appendChild(this._iframeEl as Node)
+			this._iframeParentNode.appendChild(this._iframeEl as Node)
 			this._iframe.window = this._iframeEl?.contentWindow
 		}
 		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
