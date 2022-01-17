@@ -2,7 +2,7 @@
 	import '../app.css';
 
 	import { onMount } from 'svelte';
-	import WalletSelector from '$lib/components/WalletSelector.svelte';
+	import Wallet from '$lib/Wallet.svelte';
 	let mounted;
 	onMount(() => {
 		mounted = true;
@@ -13,7 +13,7 @@
 	<h1>Welcome to SvelteKit - Arweave Wallet Connector</h1>
 	{#if mounted}
 		<div class="wallet-selector">
-			<WalletSelector />
+			<Wallet />
 		</div>
 	{/if}
 </div>

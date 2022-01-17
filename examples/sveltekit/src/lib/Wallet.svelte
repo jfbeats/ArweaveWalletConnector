@@ -6,7 +6,7 @@
 
 	// wallet imports
 	import { ArweaveWebWallet } from 'arweave-wallet-connector';
-	import IconButton from './WalletSelectorIcons.svelte';
+	import IconButton from './components/WalletSelectorIcons.svelte';
 
 	let inputUrl = dev ? 'http://localhost:8080' : 'https://arweave.app';
 	let wallet;
