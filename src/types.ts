@@ -10,8 +10,9 @@ type VerifyParams<T> = T extends (...a: any) => any ? (...a: Parameters<T>) => b
 export type AsVerifier<C> = { [Property in keyof C]: VerifyParams<C[Property]> }
 
 export type AppInfo = {
-	name?: string
-	logo?: string
+    name?: string
+    logo?: string
+    iframeParentNode?: Node
 }
 
 export type ProtocolInfo = {
