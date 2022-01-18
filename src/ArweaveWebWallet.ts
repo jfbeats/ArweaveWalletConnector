@@ -40,7 +40,7 @@ type Emitting = {}
 export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInterface {
 	namespaces = {
 		arweaveWallet: {
-			connect: () => this.connect(),
+			connect: () => this.connected || this.connect(),
 			disconnect: () => this.disconnect(),
 			getActiveAddress: () => this.address,
 			getActivePublicKey: () => this.getPublicKey(),
