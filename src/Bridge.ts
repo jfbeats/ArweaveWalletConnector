@@ -38,6 +38,7 @@ export default class Bridge extends Emitter<Emitting> {
 	constructor(connectToUrl: URL, appInfo?: AppInfo) {
 		super()
 		this._appInfo = appInfo
+		this._iframeParentNode = appInfo?.iframeParentNode || document.body
 		this._url = connectToUrl
 				
 		const urlInfo = {
