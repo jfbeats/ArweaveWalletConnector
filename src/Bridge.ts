@@ -1,6 +1,5 @@
-import { is } from 'typescript-is'
-
 import Emitter from './Emitter.js'
+import { is } from 'typescript-is'
 import type { AppInfo } from "./types"
 
 type ChannelController = {
@@ -18,51 +17,79 @@ export type Emitting = {
 	}
 	builtin: { usePopup: boolean }
 	| { keepPopup: boolean }
+	| { showIframe: boolean }
 }
+
+const WIDTH = '400'
+const HEIGHT = '600'
 
 export default class Bridge extends Emitter<Emitting> {
 	private _url: URL
-	private _appInfo?: AppInfo
-	private _iframeParentNode: Node
+	private _iframeParentNode?: Node
+	private _iframeNode?: HTMLElement | null
 	private _iframeEl?: HTMLIFrameElement | null
 	private _iframe: ChannelController = {}
+	private _showIframe = false
 	private _popup: ChannelController = {}
-	private _usePopup: boolean = true
-	private _keepPopup: boolean = false
+	private _keepPopup = false
+	private _keepPopupProvider = false
+	private _usePopupProvider = true
 	private _promiseController: {
 		resolve: (value?: unknown) => void,
 		reject: (reason?: unknown) => void
 	}[] = []
 	private _pending: number[] = []
 
+	get url() { return this._url?.origin }
+	get showIframe () { return this._showIframe }
+	set showIframe (value) {
+		if (value === this.showIframe) { return }
+		this._showIframe = value
+		this.deliverMessage({ method: 'showIframe', params: value })
+		this.emit('builtin', { showIframe: value })
+		if (!this._iframeNode) { return }
+		if (!this._iframeParentNode) {
+			this._iframeNode.style.opacity = value ? '1' : '0'
+			value ? this._iframeNode.style.removeProperty('pointer-events') : this._iframeNode.style.pointerEvents = 'none'
+		}
+	}
+	get usePopup() { return this._usePopupProvider }
+	private set usePopup(value) {
+		if (value === this.usePopup) { return }
+		this._usePopupProvider = value
+		this.deliverMessage({ method: 'usePopup', params: this.usePopup })
+		this.emit('builtin', { usePopup: this.usePopup })
+	}
+	get keepPopup() { return this._keepPopup || this._keepPopupProvider }
+	set keepPopup(value) {
+		const oldValue = this._keepPopup
+		this._keepPopup = value
+		this.deliverMessage({ method: 'keepPopup', params: this.keepPopup })
+		this.emit('builtin', { keepPopup: this.keepPopup })
+		if (oldValue && !this.keepPopup) { this.closePopup() }
+		if (this.keepPopup) { this.openPopup(true) }
+	}
+
+
+
 	constructor(connectToUrl: URL, appInfo?: AppInfo) {
 		super()
-		this._appInfo = appInfo
-		this._iframeParentNode = appInfo?.iframeParentNode || document.body
+		this._iframeParentNode = appInfo?.iframeParentNode
 		this._url = connectToUrl
-				
 		const urlInfo = {
 			origin: window.location.origin,
 			session: Math.random().toString().slice(2)
 		} as any
-
 		if (appInfo?.name) { urlInfo.name = appInfo.name }
 		if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
-
 		this._url.hash = new URLSearchParams(urlInfo).toString()
-
 		window.addEventListener('message', this.listener)
-		this.openIframe()
 	}
 
-	get url() { return this._url?.origin }
-	get usePopup() { return this._usePopup }
-	get keepPopup() { return this._keepPopup }
-	set keepPopup(keep: boolean) {
-		this._keepPopup = keep
-		this.emit('builtin', { keepPopup: keep })
-		if (keep) { this.openPopup(true) }
-		else { this.closePopup() }
+	destructor(options?: object) {
+		this.closeIframe()
+		this.closePopup(true)
+		window.removeEventListener('message', this.listener)
 	}
 
 
@@ -86,21 +113,25 @@ export default class Bridge extends Emitter<Emitting> {
 
 		// reserved methods
 		if (method === 'ready') {
-			if (e.source === this._popup.window) { this._pending = []; this._popup.resolve?.() }
+			if (e.source === this._popup.window) { this._popup.resolve?.() }
 			if (e.source === this._iframe.window) { this._iframe.resolve?.() }
 			return
 		}
 		if (method === 'change') { return }
 
 		// verified methods
+		if (method === 'showIframe') {
+			if (typeof params !== 'boolean') { return }
+			this.showIframe = params
+		}
 		if (method === 'usePopup') {
 			if (typeof params !== 'boolean') { return }
-			this._usePopup = params
+			this._usePopupProvider = params
 		}
 		if (method === 'keepPopup') {
 			if (typeof params !== 'boolean') { return }
-			this._keepPopup = params
-			if (!params) { this.closePopup() }
+			this._keepPopupProvider = params
+			this.keepPopup = this._keepPopup
 		}
 		const emitting = { method, params, session }
 		if (!is<Emitting['message']>(emitting)) { return console.warn('dropped') }
@@ -108,12 +139,6 @@ export default class Bridge extends Emitter<Emitting> {
 	}
 
 
-
-	disconnect(options?: object) {
-		this.closeIframe()
-		this.closePopup(true)
-		window.removeEventListener('message', this.listener)
-	}
 
 	postMessage(message: object, timeout?: number) {
 		const id = this._promiseController.length
@@ -126,14 +151,34 @@ export default class Bridge extends Emitter<Emitting> {
 
 	private openIframe() {
 		if (this._iframeEl) { return }
+		this._iframeNode = document.createElement('div')
 		this._iframeEl = document.createElement('iframe')
 		this._iframeEl.src = this._url.toString()
 		this._iframeEl.allow = 'usb'
-		this._iframeEl.style.display = 'none'
+		this._iframeEl.width = WIDTH
+		this._iframeEl.height = HEIGHT
+		this._iframeEl.style.border = 'none'
+		if (!this._iframeParentNode) {
+			this._iframeEl.style.borderRadius = '8px'
+			this._iframeEl.style.maxWidth = '100%'
+			this._iframeEl.style.maxHeight = '100%'
+			this._iframeNode.style.opacity = '0'
+			this._iframeNode.style.pointerEvents = 'none'
+			this._iframeNode.style.position = 'fixed'
+			this._iframeNode.style.inset = '0'
+    		this._iframeNode.style.zIndex = '1000000'
+			this._iframeNode.style.display = 'flex'
+    		this._iframeNode.style.alignItems = 'center'
+    		this._iframeNode.style.justifyContent = 'center'
+			this._iframeNode.style.transition = '0.2s opacity ease'
+    		this._iframeNode.style.background = '#00000088'
+		}
+		this._iframeNode.appendChild(this._iframeEl)
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
 		this._iframe.promise = promise
 		const injectIframe = () => {
-			this._iframeParentNode.appendChild(this._iframeEl as Node)
+			if (this._iframeParentNode) { this._iframeParentNode.appendChild(this._iframeNode!) }
+			else { document.body.appendChild(this._iframeNode!) }
 			this._iframe.window = this._iframeEl?.contentWindow
 		}
 		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
@@ -141,23 +186,19 @@ export default class Bridge extends Emitter<Emitting> {
 	}
 
 	private closeIframe() {
-		if (!this._iframeEl) { return }
-		this._iframeEl.src = 'about:blank'
-		this._iframeEl.remove()
+		this._iframeEl?.setAttribute('src', 'about:blank')
+		this._iframeNode?.remove()
+		this._iframeNode = undefined
 		this._iframeEl = undefined
 		this._iframe.reject?.()
 		this._iframe = {}
 	}
 
-	private showIframe() {
-
-	}
-
 	private openPopup(force?: boolean) {
 		if (this._popup.window && !this._popup.window.closed) { this._popup.window.focus(); return }
-		if (!this._usePopup && !force) { return }
+		if (!this.usePopup && !force) { return }
 		window.name = 'parent'
-		const popupWindow = window.open(this._url.toString(), '_blank', 'location,resizable,scrollbars,width=400,height=600')
+		const popupWindow = window.open(this._url.toString(), '_blank', `location,resizable,scrollbars,width=${WIDTH},height=${HEIGHT}`)
 		const promise = new Promise((resolve, reject) => this._popup = { window: popupWindow, resolve, reject })
 		this._popup.promise = promise
 		const timer = setInterval(() => {
@@ -169,26 +210,31 @@ export default class Bridge extends Emitter<Emitting> {
 
 	private closePopup(force?: boolean) {
 		if (!this._popup.window || this._popup.window?.closed) { return }
-		if (this._keepPopup && !force) { return }
+		// if keepPopup -> might require a return back to prev page if on mobile
+		if (this.keepPopup && !force) { return }
 		this._popup.window.location.href = 'about:blank'
 		this._popup.window.close()
 		this._popup.reject?.()
 		this._popup = {}
 	}
 
-	completeRequest() { setTimeout(() => !this._pending.length && this.closePopup(), 100) }
+	completeRequest() { setTimeout(() => {
+		if (this._pending.length) { return }
+		this.closePopup()
+		this.showIframe = false
+	}, 100)}
 
 	deliverMessage(message: any) {
 		if (!this._url) { throw 'Missing URL' }
 		const fullMessage = { ...message, jsonrpc: '2.0' }
+		fullMessage.id != null && this._pending.push(fullMessage.id)
 		this.openIframe()
 		this._iframe.promise = this._iframe.promise
 			?.then(() => this._iframe.window?.postMessage(fullMessage, this._url.origin))
 			.catch(() => { return })
 		this.openPopup()
 		this._popup.promise = this._popup.promise
-			?.then(() => fullMessage.id != null && this._pending.push(fullMessage.id))
-			.then(() => this._popup.window?.postMessage(fullMessage, this._url.origin))
+			?.then(() => this._popup.window?.postMessage(fullMessage, this._url.origin))
 			.catch(() => { return })
 	}
 }

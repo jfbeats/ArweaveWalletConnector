@@ -1,7 +1,8 @@
 import Emitter from './Emitter.js'
-import Bridge, { Emitting as InternalBridgeMap } from './Bridge.js'
+import Bridge from './Bridge.js'
 import { is } from 'typescript-is'
-import { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
+import type { Emitting as InternalBridgeMap } from './Bridge.js'
+import type { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
 
 
 
@@ -36,6 +37,14 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	}
 	private _emitterPassthrough
 
+	get address() { return this._address }
+	get connected() { return !!this._address }
+	get url() { return this._bridge?.url }
+	get showIframe () { return this._bridge?.showIframe || false }
+	get usePopup() { return this._bridge?.usePopup || false }
+	get keepPopup() { return this._bridge?.keepPopup || false }
+	set keepPopup(keep: boolean) { this._bridge && (this._bridge.keepPopup = keep) }
+
 	constructor(protocolInfo?: ProtocolInfo, appInfo?: AppInfo, connectToUrl?: string | URL) {
 		super()
 		this._protocolInfo = protocolInfo
@@ -49,6 +58,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	}
 
 	setUrl(connectToUrl: string | URL) {
+		const oldBridge = this._bridge
 		const url = typeof connectToUrl === 'string'
 			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
 			: connectToUrl
@@ -65,14 +75,10 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		Connector._bridges[url.origin].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
-		// todo we are landing on a different bridge, update keepPopup and usePopup, emit if new value
+		if (this.showIframe !== oldBridge?.showIframe) { this.emit('showIframe', this.showIframe) }
+		if (this.usePopup !== oldBridge?.usePopup) { this.emit('usePopup', this.usePopup) }
+		if (this.keepPopup !== oldBridge?.keepPopup) { this.emit('keepPopup', this.keepPopup) }
 	}
-
-	get address() { return this._address }
-	get connected() { return !!this._address }
-	get url() { return this._bridge?.url }
-	get keepPopup() { return this._bridge?.keepPopup || false }
-	set keepPopup(keep: boolean) { this._bridge && (this._bridge.keepPopup = keep) }
 
 	async connect(options?: object): Promise<string> {
 		if (!this._bridge) { throw 'URL missing' }
@@ -86,24 +92,24 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 
 	private async disconnectEvent(fromMethod: boolean, options?: object) {
 		if (!this._bridge) { return }
-		const bridge = this._bridge
+		const oldBridge = this._bridge
 		const session = this._session
-		const url = bridge.url
+		const url = oldBridge.url
 		this._address = undefined
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
-			try { await bridge.postMessage({ method: 'disconnect', params: [options], ...this._protocolInfo, session: session }) } 
+			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], ...this._protocolInfo, session }) } 
 			catch (e) { console.warn('disconnect request failed') }
 		}
 		this.emit('disconnect', undefined)
 		this.emit('change', undefined)
-		bridge.off('message', this._listener)
-		bridge.off('builtin', this._emitterPassthrough)
+		oldBridge.off('message', this._listener)
+		oldBridge.off('builtin', this._emitterPassthrough)
 		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != session)
 		setTimeout(() => {
 			if (Connector._bridges[url].sessions.length) { return }
-			Connector._bridges[url].bridge.disconnect()
+			Connector._bridges[url].bridge.destructor()
 			delete Connector._bridges[url]
 		}, 100)
 	}

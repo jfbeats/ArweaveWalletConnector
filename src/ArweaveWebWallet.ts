@@ -40,7 +40,7 @@ type Emitting = {}
 export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInterface {
 	namespaces = {
 		arweaveWallet: {
-			connect: () => this.connected || this.connect(),
+			connect: () => this.address || this.connect(),
 			disconnect: () => this.disconnect(),
 			getActiveAddress: () => this.address,
 			getActivePublicKey: () => this.getPublicKey(),
@@ -50,7 +50,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 			encrypt: () => { throw 'not implemented' },
 			decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
 			signature: (data: Uint8Array, options: any) => this.sign(data, options),
-			getPermissions: () => { throw 'not implemented' },
+			getPermissions: () => [],
 			getArweaveConfig: () => this.getArweaveConfig(),
 		},
 	}
