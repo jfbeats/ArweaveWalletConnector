@@ -28,20 +28,24 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		if (!session && this._session) { return }
 		if (method === 'connect') {
 			if (!is<string>(params)) { return }
-			if (this._address === params) { return }
-			this._address = params
-			this.emit('connect', params)
-			this.emit('change', params)
+			this.setAddress(params)
 		}
 		if (method === 'disconnect') { this.disconnectEvent(false) }
 	}
 	private _emitterPassthrough
 
 	get address() { return this._address }
-	get connected() { return !!this._address }
+	private setAddress(value?: string) {
+		if (value === this.address) { return }
+		this._address = value
+		value != null ? this.emit('connect', value) : this.emit('disconnect', value)
+		this.emit('change', value)
+	}
+	get connected() { return this._address != null }
 	get url() { return this._bridge?.url }
 	get showIframe () { return this._bridge?.showIframe || false }
 	get usePopup() { return this._bridge?.usePopup || false }
+	get requirePopup() { return this._bridge?.requirePopup || false }
 	get keepPopup() { return this._bridge?.keepPopup || false }
 	set keepPopup(keep: boolean) { this._bridge && (this._bridge.keepPopup = keep) }
 
@@ -77,6 +81,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		this._bridge.on('builtin', this._emitterPassthrough)
 		if (this.showIframe !== oldBridge?.showIframe) { this.emit('showIframe', this.showIframe) }
 		if (this.usePopup !== oldBridge?.usePopup) { this.emit('usePopup', this.usePopup) }
+		if (this.requirePopup !== oldBridge?.requirePopup) { this.emit('requirePopup', this.requirePopup) }
 		if (this.keepPopup !== oldBridge?.keepPopup) { this.emit('keepPopup', this.keepPopup) }
 	}
 
@@ -95,15 +100,13 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		const oldBridge = this._bridge
 		const session = this._session
 		const url = oldBridge.url
-		this._address = undefined
+		this.setAddress(undefined)
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
 			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], ...this._protocolInfo, session }) } 
 			catch (e) { console.warn('disconnect request failed') }
 		}
-		this.emit('disconnect', undefined)
-		this.emit('change', undefined)
 		oldBridge.off('message', this._listener)
 		oldBridge.off('builtin', this._emitterPassthrough)
 		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != session)

@@ -16,6 +16,7 @@ export type Emitting = {
 		session?: number | string | undefined
 	}
 	builtin: { usePopup: boolean }
+	| { requirePopup: boolean }
 	| { keepPopup: boolean }
 	| { showIframe: boolean }
 }
@@ -31,9 +32,9 @@ export default class Bridge extends Emitter<Emitting> {
 	private _iframe: ChannelController = {}
 	private _showIframe = false
 	private _popup: ChannelController = {}
+	private _usePopup = true
+	private _requirePopup = false
 	private _keepPopup = false
-	private _keepPopupProvider = false
-	private _usePopupProvider = true
 	private _promiseController: {
 		resolve: (value?: unknown) => void,
 		reject: (reason?: unknown) => void
@@ -53,21 +54,24 @@ export default class Bridge extends Emitter<Emitting> {
 			value ? this._iframeNode.style.removeProperty('pointer-events') : this._iframeNode.style.pointerEvents = 'none'
 		}
 	}
-	get usePopup() { return this._usePopupProvider }
-	private set usePopup(value) {
+	get usePopup() { return this._usePopup }
+	private setUsePopup(value: boolean) {
 		if (value === this.usePopup) { return }
-		this._usePopupProvider = value
-		this.deliverMessage({ method: 'usePopup', params: this.usePopup })
+		this._usePopup = value
 		this.emit('builtin', { usePopup: this.usePopup })
 	}
-	get keepPopup() { return this._keepPopup || this._keepPopupProvider }
+	get requirePopup() { return this._requirePopup }
+	private setRequirePopup(value: boolean) {
+		if (value === this.requirePopup) { return }
+		this._requirePopup = value
+		this.emit('builtin', { requirePopup: this.requirePopup })
+	}
+	get keepPopup() { return this._keepPopup }
 	set keepPopup(value) {
-		const oldValue = this._keepPopup
 		this._keepPopup = value
-		this.deliverMessage({ method: 'keepPopup', params: this.keepPopup })
 		this.emit('builtin', { keepPopup: this.keepPopup })
-		if (oldValue && !this.keepPopup) { this.closePopup() }
-		if (this.keepPopup) { this.openPopup(true) }
+		if (!value) { this.closePopup() }
+		if (value) { this.openPopup(true) }
 	}
 
 
@@ -126,12 +130,11 @@ export default class Bridge extends Emitter<Emitting> {
 		}
 		if (method === 'usePopup') {
 			if (typeof params !== 'boolean') { return }
-			this._usePopupProvider = params
+			this.setUsePopup(params)
 		}
 		if (method === 'keepPopup') {
 			if (typeof params !== 'boolean') { return }
-			this._keepPopupProvider = params
-			this.keepPopup = this._keepPopup
+			this.setRequirePopup(params)
 		}
 		const emitting = { method, params, session }
 		if (!is<Emitting['message']>(emitting)) { return console.warn('dropped') }
@@ -211,7 +214,7 @@ export default class Bridge extends Emitter<Emitting> {
 	private closePopup(force?: boolean) {
 		if (!this._popup.window || this._popup.window?.closed) { return }
 		// if keepPopup -> might require a return back to prev page if on mobile
-		if (this.keepPopup && !force) { return }
+		if ((this.keepPopup || this.requirePopup) && !force) { return }
 		this._popup.window.location.href = 'about:blank'
 		this._popup.window.close()
 		this._popup.reject?.()
@@ -226,6 +229,7 @@ export default class Bridge extends Emitter<Emitting> {
 
 	deliverMessage(message: any) {
 		if (!this._url) { throw 'Missing URL' }
+		console.info(`WalletConnector:post`, message)
 		const fullMessage = { ...message, jsonrpc: '2.0' }
 		fullMessage.id != null && this._pending.push(fullMessage.id)
 		this.openIframe()
