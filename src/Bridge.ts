@@ -44,7 +44,7 @@ export default class Bridge extends Emitter<Emitting> {
 	get url() { return this._url?.origin }
 	get showIframe () { return this._showIframe }
 	set showIframe (value) {
-		if (value === this.showIframe) { return }
+		if (value === this._showIframe) { return }
 		this._showIframe = value
 		this.deliverMessage({ method: 'showIframe', params: value })
 		this.emit('builtin', { showIframe: value })
@@ -56,20 +56,20 @@ export default class Bridge extends Emitter<Emitting> {
 	}
 	get usePopup() { return this._usePopup }
 	private setUsePopup(value: boolean) {
-		if (value === this.usePopup) { return }
+		if (value === this._usePopup) { return }
 		this._usePopup = value
-		this.emit('builtin', { usePopup: this.usePopup })
+		this.emit('builtin', { usePopup: value })
 	}
 	get requirePopup() { return this._requirePopup }
 	private setRequirePopup(value: boolean) {
-		if (value === this.requirePopup) { return }
+		if (value === this._requirePopup) { return }
 		this._requirePopup = value
-		this.emit('builtin', { requirePopup: this.requirePopup })
+		this.emit('builtin', { requirePopup: value })
 	}
 	get keepPopup() { return this._keepPopup }
 	set keepPopup(value) {
 		this._keepPopup = value
-		this.emit('builtin', { keepPopup: this.keepPopup })
+		this.emit('builtin', { keepPopup: value })
 		if (!value) { this.closePopup() }
 		if (value) { this.openPopup(true) }
 	}

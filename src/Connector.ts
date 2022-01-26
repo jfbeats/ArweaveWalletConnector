@@ -20,6 +20,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	private _protocolInfo?: ProtocolInfo
 	private _appInfo?: AppInfo
 	private _bridge?: Bridge
+	private _url?: URL
 	private _session = 0
 	private _address?: string
 	private _listener = (message: InternalBridgeMap['message']) => {
@@ -66,6 +67,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		const url = typeof connectToUrl === 'string'
 			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
 			: connectToUrl
+		this._url = url
 		if (this._bridge?.url === url.origin) { return }
 		this.disconnect()
 		if (!Connector._bridges[url.origin]) {
@@ -79,17 +81,17 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		Connector._bridges[url.origin].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
-		if (this.showIframe !== oldBridge?.showIframe) { this.emit('showIframe', this.showIframe) }
-		if (this.usePopup !== oldBridge?.usePopup) { this.emit('usePopup', this.usePopup) }
-		if (this.requirePopup !== oldBridge?.requirePopup) { this.emit('requirePopup', this.requirePopup) }
-		if (this.keepPopup !== oldBridge?.keepPopup) { this.emit('keepPopup', this.keepPopup) }
+		if (this._bridge.showIframe !== oldBridge?.showIframe) { this.emit('showIframe', this._bridge.showIframe) }
+		if (this._bridge.usePopup !== oldBridge?.usePopup) { this.emit('usePopup', this._bridge.usePopup) }
+		if (this._bridge.requirePopup !== oldBridge?.requirePopup) { this.emit('requirePopup', this._bridge.requirePopup) }
+		if (this._bridge.keepPopup !== oldBridge?.keepPopup) { this.emit('keepPopup', this._bridge.keepPopup) }
 	}
 
 	async connect(options?: object): Promise<string> {
-		if (!this._bridge) { throw 'URL missing' }
+		if (!this._bridge) { this._url && this.setUrl(this._url) }
 		const promise = new Promise<string>(resolve => this.once('connect', resolve))
 			.finally(() => this._bridge?.completeRequest())
-		this._bridge.deliverMessage({ method: 'connect', params: options })
+		this._bridge!.deliverMessage({ method: 'connect', params: options })
 		return promise
 	}
 
