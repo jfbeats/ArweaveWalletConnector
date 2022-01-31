@@ -99,11 +99,11 @@ import Rule from './components/icons/Rule.vue'
 import Upload from './components/icons/Upload.vue'
 import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
+import type Transaction from 'arweave/web/lib/transaction'
 
 // Here, we import an instance of a wrapper class made for the Vue
 // reactivity engine instead of importing the connector directly
 import { wallet } from './ReactiveWallet'
-import Transaction from 'arweave/web/lib/transaction'
 
 const arweave = Arweave.init({ host: 'arweave.net', port: 443, protocol: 'https' })
 wallet.on('connect', () => currentStep.value = 1)
@@ -222,33 +222,37 @@ function decode (buffer: BufferSource) {
 
 const code = computed(() => [
 `import { ArweaveWebWallet } from 'arweave-wallet-connector'
+
 const wallet = new ArweaveWebWallet({
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
 })
 
-wallet.setUrl('${inputUrl.value}')`,
+wallet.setUrl('${inputUrl.value}')
+wallet.connect() // on user gesture to avoid blocked popup
+`,
 
 
 
 `const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
-await wallet.signTransaction(transaction)`,
+await wallet.signTransaction(transaction)
+`,
 
 
 
 `// Uploading data to the wallet directly is not yet available
 // using arweave.js in the meantime
 {
-${txToString(transactionObject.value)}}`,
+${txToString(transactionObject.value)}}
+`,
 
 
 
 `let message = '${encryptionMessage.value}'
 anyRsaEncryptFunction(message, await wallet.getPublicKey())
-await wallet.decrypt(message, { name: 'RSA-OAEP' })`,
-
-
+await wallet.decrypt(message, { name: 'RSA-OAEP' })
+`,
 
 ])
 </script>
