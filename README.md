@@ -26,23 +26,29 @@ The connector is a final link to permanent account managers. Users are not requi
 
 *** Brave is currently the only browser requiring users to manually set `all cookies allowed` in the shields menu in order to let the iframe access its own user settings. Wallet providers can choose how they handle such cases where background functionality is unavailable. For arweave.app specifically, the window popup stays opened.
 
-## How to use
+## Note
 
-As of now [arweave.app](https://arweave.app) is the only provider so it is recommended to have it as default
+As of now, [arweave.app](https://arweave.app) is the only provider so it is recommended to offer it as a default option. Increase decentralization and permanence by allowing users to enter their own custom wallet URL. This will also let them use providers running on localhost in your application.
+
+## How to use
+Install from NPM:
 
 ```
 npm i arweave-wallet-connector
 ```
 
+Import / Create instance / Set the URL to connect to / Launch:
+
 ```js
 import { ArweaveWebWallet } from 'arweave-wallet-connector'
 
 const wallet = new ArweaveWebWallet({
+	// optionally provide information about your app that will be displayed in the wallet provider interface
 	name: 'Your application name',
-	logo: 'Url of your logo to be displayed to users'
+	logo: 'URL of your logo to be displayed to users'
 })
 
-wallet.setUrl('Url of the wallet provider to connect to')
+wallet.setUrl('URL of the wallet provider to connect to')
 await wallet.connect() // on user gesture to avoid blocked popup
 ```
 
