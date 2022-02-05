@@ -5,7 +5,7 @@
 		<WalletSelector v-model="inputUrl" class="wallet-selector" />
 		<CodeBox code="npm install arweave-wallet-connector" />
 		<CodeBox :code="code[0]" />
-		<div style="text-align: justify; max-width: 800px;">The connector is a final link to permanent account managers. The system relies on no 3rd party and can connect any web page to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it. The connector module itself has no visual element included. This page is an example on how it can be integrated.</div>
+		<div style="text-align: justify; max-width: 800px;">The connector is a final link to permanent account managers. Users are not required to install anything and are not restricted to specific device types or operating systems. The system relies on no 3rd party and, once implemented, enables any web page to connect to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it. The connector module itself has no visual element included. This page is an example on how it can be integrated.</div>
 		<a class="button" href="https://github.com/jfbeats/ArweaveWalletConnector">
 			<Github />
 			<span>View on Github</span>
@@ -229,7 +229,7 @@ const wallet = new ArweaveWebWallet({
 })
 
 wallet.setUrl('${inputUrl.value}')
-wallet.connect() // on user gesture to avoid blocked popup
+await wallet.connect() // on user gesture to avoid blocked popup
 `,
 
 
