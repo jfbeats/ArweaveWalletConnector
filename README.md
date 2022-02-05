@@ -8,7 +8,7 @@ See an example of user flow you can build with it: https://jfbeats.github.io/Arw
 
 ## Info
 
-The connector is a final link to permanent account managers. Users are not required to install anything and are not restricted to specific device types or operating systems. The system relies on no 3rd party and, once implemented, enables any web page to connect to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to provide a bridge working entirely on the user device, and even offline if the web apps support it.
+The connector is a final link to permanent account managers. Users are not required to install anything and are not restricted to specific device types or operating systems. The system relies on no 3rd party and, once implemented, enables any web page to connect to any wallet provider respecting the standard. This module effectively and permanently provides a communication protocol between decentralized applications hosted on arweave or normal web pages. It leverages web technologies to setup a bridge working entirely on the user device, and even offline if the web apps support it.
 
 ## Features
 
@@ -24,7 +24,7 @@ The connector is a final link to permanent account managers. Users are not requi
 - Emits events for any property value change - listen using `wallet.on('event', callback)`
 - Uses the [JSON RPC](https://www.jsonrpc.org/specification) api standard internally
 
-*** Brave is currently the only browser requiring users to manually set `all cookies allowed` in the shields menu in order to let the iframe access its own user settings. Wallet providers can choose how they handle such cases where background functionality is unavailable. For arweave.app specifically, the window popup stays opened.
+*** Brave is currently the only browser requiring users to manually set `all cookies allowed` in the shields menu in order to let the iframe access its own saved settings. Wallet providers can choose how they handle such cases where background functionality is unavailable. For arweave.app specifically, the window popup stays opened.
 
 ## Note
 
