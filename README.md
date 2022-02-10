@@ -2,7 +2,7 @@
 
 ## Live Demo
 
-The connector module itself has no visual element included.
+The connector module itself does not include visual components and is independent of any javascript framework.
 
 See an example of user flow you can build with it: https://jfbeats.github.io/ArweaveWalletConnector/
 
