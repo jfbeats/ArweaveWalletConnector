@@ -98,7 +98,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 
 	async disconnect(options?: object) { return this.disconnectEvent(true, options) }
 
-	private async disconnectEvent(fromMethod: boolean, options?: object) { // todo reject pending promises
+	private async disconnectEvent(fromMethod: boolean, options?: object) {
 		if (!this._bridge) { return }
 		const oldBridge = this._bridge
 		const session = this._session
@@ -124,7 +124,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		return new Promise((resolve, reject) => {
 			if (!this._bridge) { return reject('URL missing') }
 			this.once('disconnect', reject)
-			this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, options).then(resolve)
+			this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, options).then(resolve).catch(reject)
 		})
 	}
 }
