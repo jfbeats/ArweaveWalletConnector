@@ -1,6 +1,6 @@
 import Emitter from './Emitter.js'
 import { is } from 'typescript-is'
-import type { AppInfo } from "./types"
+import type { AppInfo, PostMessageOptions } from './types'
 
 type ChannelController = {
 	window?: Window | null,
@@ -143,12 +143,12 @@ export default class Bridge extends Emitter<Emitting> {
 
 
 
-	postMessage(message: object, timeout?: number) {
+	postMessage(message: object, options?: PostMessageOptions) {
 		const id = this._promiseController.length
 		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
 			.finally(() => this.completeRequest())
 		this.deliverMessage({ ...message, id })
-		if (timeout) { setTimeout(() => this._promiseController[id].reject('timeout'), timeout) }
+		if (options?.timeout) { setTimeout(() => this._promiseController[id].reject('timeout'), options.timeout) }
 		return promise
 	}
 
@@ -213,7 +213,8 @@ export default class Bridge extends Emitter<Emitting> {
 
 	private closePopup(force?: boolean) {
 		if (!this._popup.window || this._popup.window?.closed) { return }
-		// if keepPopup -> might require a return back to prev page if on mobile
+		// todo test multiple instances behavior
+		// todo if keepPopup -> might require a return back to prev page if on mobile
 		if ((this.keepPopup || this.requirePopup) && !force) { return }
 		this._popup.window.location.href = 'about:blank'
 		this._popup.window.close()
@@ -227,18 +228,18 @@ export default class Bridge extends Emitter<Emitting> {
 		this.showIframe = false
 	}, 100)}
 
-	deliverMessage(message: any) {
+	deliverMessage(message: any, options?: PostMessageOptions) {
 		if (!this._url) { throw 'Missing URL' }
 		console.info(`WalletConnector:post`, message)
 		const fullMessage = { ...message, jsonrpc: '2.0' }
 		fullMessage.id != null && this._pending.push(fullMessage.id)
 		this.openIframe()
 		this._iframe.promise = this._iframe.promise
-			?.then(() => this._iframe.window?.postMessage(fullMessage, this._url.origin))
+			?.then(() => this._iframe.window?.postMessage(fullMessage, this._url.origin, options?.transfer ? [fullMessage] : undefined))
 			.catch(() => { return })
 		this.openPopup()
 		this._popup.promise = this._popup.promise
-			?.then(() => this._popup.window?.postMessage(fullMessage, this._url.origin))
+			?.then(() => this._popup.window?.postMessage(fullMessage, this._url.origin, options?.transfer ? [fullMessage] : undefined))
 			.catch(() => { return })
 	}
 }

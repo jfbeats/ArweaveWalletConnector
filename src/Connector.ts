@@ -2,7 +2,7 @@ import Emitter from './Emitter.js'
 import Bridge from './Bridge.js'
 import { is } from 'typescript-is'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
-import type { AppInfo, ProtocolInfo, Flatten, UnionToIntersection } from './types'
+import type { AppInfo, ProtocolInfo, PostMessageOptions, Flatten, UnionToIntersection } from './types'
 
 
 
@@ -37,7 +37,7 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 
 	get address() { return this._address }
 	private setAddress(value?: string) {
-		if (value === this.address) { return }
+		if (value && value === this.address) { return }
 		this._address = value
 		value != null ? this.emit('connect', value) : this.emit('disconnect', value)
 		this.emit('change', value)
@@ -89,15 +89,16 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 
 	async connect(options?: object): Promise<string> {
 		if (!this._bridge) { this._url && this.setUrl(this._url) }
-		const promise = new Promise<string>(resolve => this.once('connect', resolve))
-			.finally(() => this._bridge?.completeRequest())
+		const promise = new Promise<string>((resolve, reject) => {
+			this.once('change', address => address ? resolve(address) : reject())
+		}).finally(() => this._bridge?.completeRequest())
 		this._bridge!.deliverMessage({ method: 'connect', params: options })
 		return promise
 	}
 
 	async disconnect(options?: object) { return this.disconnectEvent(true, options) }
 
-	private async disconnectEvent(fromMethod: boolean, options?: object) {
+	private async disconnectEvent(fromMethod: boolean, options?: object) { // todo reject pending promises
 		if (!this._bridge) { return }
 		const oldBridge = this._bridge
 		const session = this._session
@@ -119,8 +120,11 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		}, 100)
 	}
 
-	postMessage(method: string, params?: any[], timeout?: number) {
-		if (!this._bridge) { throw 'URL missing' }
-		return this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, timeout)
+	postMessage(method: string, params?: any[], options?: PostMessageOptions) {
+		return new Promise((resolve, reject) => {
+			if (!this._bridge) { return reject('URL missing') }
+			this.once('disconnect', reject)
+			this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, options).then(resolve)
+		})
 	}
 }

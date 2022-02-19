@@ -1,6 +1,7 @@
 import Connector from './Connector.js'
 import { load, unload } from './Inject.js'
 import { is } from 'typescript-is'
+import { Tag } from 'arweave/web/lib/transaction'
 import type { FromProvider, AsVerifier, Override, Null, AppInfo } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
 import type { TransactionInterface } from 'arweave/web/lib/transaction'
@@ -75,14 +76,13 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 	}
 
 	async signTransaction(tx: Transaction, options?: object | Null) {
-		const { data, chunks, ...txHeader } = tx // todo transfer data separately?
+		const { data, chunks, ...txHeader } = tx
 		const res = await this.postMessage('signTransaction', [txHeader, options])
 		if (!is<FromArweaveProvider['signTransaction']>(res)) { throw 'TypeError' }
 		tx.setSignature({
 			id: res.id,
 			owner: res.owner || tx.owner,
-			// @ts-ignore todo
-			tags: res.tags,
+			tags: res.tags?.map(tag => new Tag(tag.name, tag.value, true)),
 			signature: res.signature,
 			reward: res.reward || undefined
 		})

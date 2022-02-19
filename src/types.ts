@@ -19,3 +19,8 @@ export type ProtocolInfo = {
 	protocol?: string
 	version?: string
 }
+
+export type PostMessageOptions = {
+	timeout?: number
+	transfer?: boolean
+}
