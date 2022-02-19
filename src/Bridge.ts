@@ -110,7 +110,7 @@ export default class Bridge extends Emitter<Emitting> {
 			if (!this._promiseController[+id]) { throw 'received result to nonexistent request' }
 			this._pending = this._pending.filter(x => x != id)
 			if (error != null) { this._promiseController[+id].reject(error) }
-			if (result != null) { this._promiseController[+id].resolve(result) }
+			else { this._promiseController[+id].resolve(result) }
 			return
 		}
 		if (typeof method !== 'string') { return }
