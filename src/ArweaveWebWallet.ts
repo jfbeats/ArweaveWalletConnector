@@ -22,6 +22,7 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
+	dispatch(tx: Transaction, options?: object | Null): Promise<void>
 	sign(message: ArrayBufferView, options: SignOptions): Promise<ArrayBufferView>
 	decrypt(message: ArrayBufferView, options: DecryptOptions): Promise<ArrayBufferView>
 }
@@ -29,6 +30,7 @@ export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null): Promise<{
 		id: string, owner?: string | Null, tags?: SerializedTx['tags'] | Null, signature: string, reward?: string | Null }>
+	dispatch(tx: Partial<SerializedTx>, options?: object | Null): Promise<void>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
@@ -48,6 +50,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 			getAllAddresses: () => { throw 'not implemented' },
 			getWalletNames: () => { throw 'not implemented' },
 			sign: (tx: Transaction, options?: any) => this.signTransaction(tx, options),
+			dispatch: (tx: Transaction, options?: any) => this.dispatch(tx, options),
 			encrypt: () => { throw 'not implemented' },
 			decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
 			signature: (data: Uint8Array, options: any) => this.sign(data, options),
@@ -89,6 +92,10 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 		return tx
 	}
 
+	async dispatch(tx: Transaction, options?: object | Null) {
+		await this.postMessage('dispatch', [tx, options], { transfer: true })
+	}
+
 	// async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | string): Promise<TransactionUploader> {
 	// 	// getUploader be a wallet method instead
 	// 	const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
@@ -117,6 +124,7 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
+	dispatch(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && ArrayBuffer.isView(tx.data) && is<typeof options>(options) }
 	sign(message: ArrayBufferView, options: SignOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 	decrypt(message: ArrayBufferView, options: DecryptOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 }
