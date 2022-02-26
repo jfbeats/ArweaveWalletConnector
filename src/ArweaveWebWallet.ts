@@ -1,7 +1,7 @@
 import Connector from './Connector.js'
 import { load, unload } from './Inject.js'
-import { is } from 'typescript-is'
 import { Tag } from 'arweave/web/lib/transaction'
+import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override, Null, AppInfo } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
 import type { TransactionInterface } from 'arweave/web/lib/transaction'
@@ -15,6 +15,10 @@ interface SerializedTx extends Override<TransactionInterface, {
 }> {}
 type SignOptions = Parameters<typeof window.crypto.subtle.sign>[0]
 type DecryptOptions = AlgorithmIdentifier | Override<RsaOaepParams, { label?: string }>
+type DispatchResult = {
+	id?: string
+	type?: 'BASE' | 'BUNDLED'
+}
 
 
 
@@ -22,7 +26,7 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	dispatch(tx: Transaction, options?: object | Null): Promise<void>
+	dispatch(tx: Transaction, options?: object | Null): Promise<DispatchResult>
 	sign(message: ArrayBufferView, options: SignOptions): Promise<ArrayBufferView>
 	decrypt(message: ArrayBufferView, options: DecryptOptions): Promise<ArrayBufferView>
 }
@@ -30,7 +34,7 @@ export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null): Promise<{
 		id: string, owner?: string | Null, tags?: SerializedTx['tags'] | Null, signature: string, reward?: string | Null }>
-	dispatch(tx: Partial<SerializedTx>, options?: object | Null): Promise<void>
+	dispatch(tx: Partial<SerializedTx>, options?: object | Null): Promise<DispatchResult>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
@@ -93,15 +97,10 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 	}
 
 	async dispatch(tx: Transaction, options?: object | Null) {
-		await this.postMessage('dispatch', [tx, options], { transfer: true })
+		const res = await this.postMessage('dispatch', [tx, options], { transfer: true })
+		if (!is<FromArweaveProvider['dispatch']>(res)) { throw 'TypeError' }
+		return res
 	}
-
-	// async getUploader(tx: Transaction | SerializedUploader | string, data?: Uint8Array | string): Promise<TransactionUploader> {
-	// 	// getUploader be a wallet method instead
-	// 	const api = await this.getArweaveConfig(tx) // ask the wallet for the endpoint to upload to
-	// 	const arweave = Arweave.init(api) // init arweave instance to that endpoint
-	// 	return arweave.transactions.getUploader(tx, data) // generate an uploader for the transaction and endpoint
-	// }
 
 	async sign<T extends ArrayBufferView>(message: T, options: SignOptions) {
 		const res = await this.postMessage('sign', [message, options])
