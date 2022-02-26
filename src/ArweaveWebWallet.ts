@@ -1,6 +1,6 @@
 import Connector from './Connector.js'
 import { load, unload } from './Inject.js'
-import { Tag } from 'arweave/web/lib/transaction'
+import { Tag } from 'arweave/web/lib/transaction.js'
 import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override, Null, AppInfo } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
