@@ -58,7 +58,7 @@ export class ArweaveWebWallet extends Connector<Emitting> implements ArweaveInte
 			encrypt: () => { throw 'not implemented' },
 			decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
 			signature: (data: Uint8Array, options: any) => this.sign(data, options),
-			getPermissions: () => [],
+			getPermissions: () => ["ACCESS_ADDRESS", "ACCESS_PUBLIC_KEY", "ACCESS_ALL_ADDRESSES", "SIGN_TRANSACTION", "ENCRYPT", "DECRYPT", "SIGNATURE", "ACCESS_ARWEAVE_CONFIG", "DISPATCH",],
 			getArweaveConfig: () => this.getArweaveConfig(),
 		},
 	}
