@@ -1,5 +1,6 @@
-import Emitter from '../utils/Emitter.js'
 import Bridge from './Bridge.js'
+import Emitter from '../utils/Emitter.js'
+import { generateUrl } from '../utils/Utils.js'
 import { load, unload } from '../utils/Inject.js'
 import { is } from 'typescript-is'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
@@ -65,9 +66,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 
 	setUrl(connectToUrl: string | URL) {
 		const oldBridge = this._bridge
-		const url = typeof connectToUrl === 'string'
-			? new URL(connectToUrl.includes('://') ? connectToUrl : 'https://' + connectToUrl)
-			: connectToUrl
+		const url = generateUrl(connectToUrl)
 		this._url = url
 		if (this._bridge?.url === url.origin) { return }
 		this.disconnect()

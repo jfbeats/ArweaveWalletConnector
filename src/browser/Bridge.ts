@@ -1,4 +1,5 @@
 import Emitter from '../utils/Emitter.js'
+import { PromiseController } from '../utils/PromiseController.js'
 import { is } from 'typescript-is'
 import type { AppInfo, PostMessageOptions } from '../types'
 
@@ -35,10 +36,7 @@ export default class Bridge extends Emitter<Emitting> {
 	private _usePopup = true
 	private _requirePopup = false
 	private _keepPopup = false
-	private _promiseController: {
-		resolve: (value?: unknown) => void,
-		reject: (reason?: unknown) => void
-	}[] = []
+	private _promiseController = new PromiseController()
 	private _pending: number[] = []
 
 	get url() { return this._url?.origin }
@@ -104,15 +102,8 @@ export default class Bridge extends Emitter<Emitting> {
 		if (typeof e.data !== 'object') { return }
 		const { method, params, id, result, error, session } = e.data as { [key: string]: unknown }
 		console.info(`WalletConnector:${e.source === this._popup.window ? 'popup' : 'iframe'}`, e.data)
-		if (id != null) {
-			if (typeof id !== 'number' && typeof id !== 'string') { return }
-			if (typeof id === 'string' && isNaN(parseInt(id))) { return }
-			if (!this._promiseController[+id]) { throw 'received result to nonexistent request' }
-			this._pending = this._pending.filter(x => x != id)
-			if (error != null) { this._promiseController[+id].reject(error) }
-			else { this._promiseController[+id].resolve(result) }
-			return
-		}
+		if (id != null) { this._pending = this._pending.filter(x => x != id) }
+		if (this._promiseController.processResponse(e.data)) { return }
 		if (typeof method !== 'string') { return }
 
 		// reserved methods
@@ -144,11 +135,8 @@ export default class Bridge extends Emitter<Emitting> {
 
 
 	postMessage(message: object, options?: PostMessageOptions) {
-		const id = this._promiseController.length
-		const promise = new Promise((resolve, reject) => this._promiseController.push({ resolve, reject }))
-			.finally(() => this.completeRequest())
-		this.deliverMessage({ ...message, id })
-		if (options?.timeout) { setTimeout(() => this._promiseController[id].reject('timeout'), options.timeout) }
+		const promise = this._promiseController.newMessagePromise(message, options).finally(() => this.completeRequest())
+		this.deliverMessage(message)
 		return promise
 	}
 
