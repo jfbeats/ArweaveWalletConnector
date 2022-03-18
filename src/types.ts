@@ -10,9 +10,9 @@ type VerifyParams<T> = T extends (...a: any) => any ? (...a: Parameters<T>) => b
 export type AsVerifier<C> = { [Property in keyof C]: VerifyParams<C[Property]> }
 
 export type AppInfo = {
-    name?: string
-    logo?: string
-    iframeParentNode?: Node
+	name?: string
+	logo?: string
+	iframeParentNode?: Node
 }
 
 export type ProtocolInfo = {
@@ -24,3 +24,13 @@ export type PostMessageOptions = {
 	timeout?: number
 	transfer?: boolean
 }
+
+export type Connection = {
+	address?: string
+	connect(): any
+	disconnect(): any
+	postMessage(method: string, params?: any[], options?: PostMessageOptions & ProtocolInfo): any
+}
+
+type GConstructor<T = {}> = new (...args: any[]) => T
+export type ConnectionConstructor = GConstructor<Connection>

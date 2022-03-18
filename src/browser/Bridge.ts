@@ -1,6 +1,6 @@
-import Emitter from './Emitter.js'
+import Emitter from '../utils/Emitter.js'
 import { is } from 'typescript-is'
-import type { AppInfo, PostMessageOptions } from './types'
+import type { AppInfo, PostMessageOptions } from '../types'
 
 type ChannelController = {
 	window?: Window | null,

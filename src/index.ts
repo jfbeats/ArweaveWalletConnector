@@ -1,2 +1,6 @@
+import { ArweaveApi } from './Arweave.js'
+import Connector from './browser/Connector.js'
+
 export type { AppInfo } from './types'
-export { ArweaveWebWallet } from './ArweaveWebWallet.js'
+
+export const ArweaveWebWallet = ArweaveApi(Connector)

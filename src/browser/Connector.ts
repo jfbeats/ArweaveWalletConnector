@@ -1,8 +1,9 @@
-import Emitter from './Emitter.js'
+import Emitter from '../utils/Emitter.js'
 import Bridge from './Bridge.js'
+import { load, unload } from '../utils/Inject.js'
 import { is } from 'typescript-is'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
-import type { AppInfo, ProtocolInfo, PostMessageOptions, Flatten, UnionToIntersection } from './types'
+import type { Connection, AppInfo, PostMessageOptions, Flatten, UnionToIntersection, ProtocolInfo } from '../types'
 
 
 
@@ -13,11 +14,10 @@ type Emitting = BridgeMap & {
 	change: string | undefined
 }
 
+// todo disable multiple instances
 
-
-export default class Connector<EmittingMap extends Record<string, unknown>> extends Emitter<Flatten<EmittingMap & Emitting>> {
+export default class BrowserConnector extends Emitter<Emitting> implements Connection {
 	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
-	private _protocolInfo?: ProtocolInfo
 	private _appInfo?: AppInfo
 	private _bridge?: Bridge
 	private _url?: URL
@@ -50,15 +50,16 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 	get keepPopup() { return this._bridge?.keepPopup || false }
 	set keepPopup(keep: boolean) { this._bridge && (this._bridge.keepPopup = keep) }
 
-	constructor(protocolInfo?: ProtocolInfo, appInfo?: AppInfo, connectToUrl?: string | URL) {
+	constructor(appInfo?: AppInfo, connectToUrl?: string | URL) {
 		super()
-		this._protocolInfo = protocolInfo
 		this._appInfo = appInfo
 
 		this._emitterPassthrough = <T extends keyof BridgeMap>(param: InternalBridgeMap['builtin']) => {
 			const event = Object.entries(param)[0] as [T, BridgeMap[T]]
 			this.emit(event[0], event[1])
 		}
+		this.on('connect', () => load(this as any))
+		this.on('disconnect', () => unload(this as any))
 		if (connectToUrl) { this.setUrl(connectToUrl) }
 	}
 
@@ -70,15 +71,15 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		this._url = url
 		if (this._bridge?.url === url.origin) { return }
 		this.disconnect()
-		if (!Connector._bridges[url.origin]) {
+		if (!BrowserConnector._bridges[url.origin]) {
 			this._bridge = new Bridge(url, this._appInfo)
-			Connector._bridges[url.origin] = { bridge: this._bridge, sessions: [] }
+			BrowserConnector._bridges[url.origin] = { bridge: this._bridge, sessions: [] }
 		} else {
-			this._bridge = Connector._bridges[url.origin].bridge
-			const sessions = Connector._bridges[url.origin].sessions
+			this._bridge = BrowserConnector._bridges[url.origin].bridge
+			const sessions = BrowserConnector._bridges[url.origin].sessions
 			for (let i = 0; i <= sessions.length; i++) { if (sessions.indexOf(i) < 0) { this._session = i; break } }
 		}
-		Connector._bridges[url.origin].sessions.push(this._session)
+		BrowserConnector._bridges[url.origin].sessions.push(this._session)
 		this._bridge.on('message', this._listener)
 		this._bridge.on('builtin', this._emitterPassthrough)
 		if (this._bridge.showIframe !== oldBridge?.showIframe) { this.emit('showIframe', this._bridge.showIframe) }
@@ -107,24 +108,24 @@ export default class Connector<EmittingMap extends Record<string, unknown>> exte
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
-			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], ...this._protocolInfo, session }) } 
+			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], session }) } 
 			catch (e) { console.warn('disconnect request failed') }
 		}
 		oldBridge.off('message', this._listener)
 		oldBridge.off('builtin', this._emitterPassthrough)
-		Connector._bridges[url].sessions = Connector._bridges[url].sessions.filter(x => x != session)
+		BrowserConnector._bridges[url].sessions = BrowserConnector._bridges[url].sessions.filter(x => x != session)
 		setTimeout(() => {
-			if (Connector._bridges[url].sessions.length) { return }
-			Connector._bridges[url].bridge.destructor()
-			delete Connector._bridges[url]
+			if (BrowserConnector._bridges[url].sessions.length) { return }
+			BrowserConnector._bridges[url].bridge.destructor()
+			delete BrowserConnector._bridges[url]
 		}, 100)
 	}
 
-	postMessage(method: string, params?: any[], options?: PostMessageOptions) {
+	postMessage(method: string, params?: any[], options?: PostMessageOptions & ProtocolInfo) {
 		return new Promise((resolve, reject) => {
 			if (!this._bridge) { return reject('URL missing') }
 			this.once('disconnect', reject)
-			this._bridge.postMessage({ method, params, ...this._protocolInfo, session: this._session }, options).then(resolve).catch(reject)
+			this._bridge.postMessage({ method, params, session: this._session, protocol: options?.protocol, version: options?.version }, options).then(resolve).catch(reject)
 		})
 	}
 }
