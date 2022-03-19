@@ -9,9 +9,10 @@
 		"lib/**/*"
 	],
 	"scripts": {
-		"build": "ttsc && node build.js",
+		"build": "npm run clean && ttsc && node build.js",
 		"prepare": "npm run build",
-		"dev": "npm run build && cd example && npm run dev"
+		"dev": "npm run build && cd example && npm run dev",
+		"clean": "rimraf dist && rimraf lib"
 	},
 	"license": "ISC",
 	"dependencies": {

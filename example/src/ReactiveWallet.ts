@@ -20,6 +20,7 @@ export class ReactiveWallet extends ArweaveWebWallet {
 		this.on('keepPopup', (keep) => this.state.keepPopup = keep)
 	}
 	get url () { return this.state.url }
+	// @ts-ignore
 	get address () { return this.state.address }
 	get keepPopup () { return this.state.keepPopup }
 	set keepPopup (value) { super.keepPopup = value }
