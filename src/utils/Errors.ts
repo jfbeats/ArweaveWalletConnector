@@ -1,0 +1,1 @@
+export const windowMissing = 'Window context missing. If you are using a server side rendering framework, make sure that the connector is excluded. If you want to use the connector outside the browser, use the node version of the module instead'

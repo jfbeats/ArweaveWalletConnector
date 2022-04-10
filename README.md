@@ -20,19 +20,29 @@ The connector is a final link to permanent account managers. Users are not requi
 
 ## Features
 
-- No install required for end users
-- Available on any device, including mobile
+For everyone:
+- Forever free
 - Can handle requests in the background ***
+
+For your users:
+- No install required
+- Available on any device, including mobile
+
+For developers:
+- Fully typed
+- Final - no breaking changes, only improvements
 - Compatible with [arweave-js](https://github.com/ArweaveTeam/arweave-js)
 - Compatible with other tools instantiated using an [arweave-js](https://github.com/ArweaveTeam/arweave-js) api object (e.g. smartweave clients)
 - Compatible with anything else using the injected `window.arweaveWallet` object
 - Most secure - includes built-in bidirectional type validation at runtime to filter out external messages with unexpected formats
-- Does not require the developper to manage permissions requests - handled by the wallet provider
-- Fully typed
+- Does not require managing permissions - handled by the wallet provider
 - Emits events for any property value change - listen using `wallet.on('event', callback)`
-- Uses the [JSON RPC](https://www.jsonrpc.org/specification) api standard internally
 
-*** Brave is currently the only browser requiring users to manually set `all cookies allowed` in the shields menu in order to let the iframe access its own saved settings. Wallet providers can choose how they handle such cases where background functionality is unavailable. For arweave.app specifically, the window popup stays opened.
+For wallets developers:
+- Uses the [JSON RPC](https://www.jsonrpc.org/specification) api standard internally
+- Offers prebuilt runtime types validation that can be imported
+
+<sub>*** Brave is currently the only browser requiring users to manually set `all cookies allowed` in the shields menu in order to let the iframe access its own saved settings. Wallet providers can choose how they handle such cases where background functionality is unavailable. For arweave.app specifically, the window popup stays opened.</sub>
 
 ## Note
 

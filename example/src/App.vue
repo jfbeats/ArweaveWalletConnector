@@ -134,7 +134,7 @@ const signTransaction = async () => {
 	currentStep.value = 1
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
-		transaction.addTag('App-Name', +transactionData.quantity > 0 && transactionData.target === 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE' ? 'Donating to the dev' : 'Trying out the connector')
+		transaction.addTag('App-Name', +transactionData.quantity > 0 && transactionData.target === 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE' ? 'Dev donation' : 'Trying out the connector')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
 		transaction.addTag('Tag-3', 'you can sign it here and not send it on the next page')

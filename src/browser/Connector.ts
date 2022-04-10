@@ -2,6 +2,7 @@ import Bridge from './Bridge.js'
 import Emitter from '../utils/Emitter.js'
 import { generateUrl } from '../utils/Utils.js'
 import { load, unload } from '../utils/Inject.js'
+import { windowMissing } from '../utils/Errors.js'
 import { is } from 'typescript-is'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
 import type { Connection, AppInfo, PostMessageOptions, Flatten, UnionToIntersection, ProtocolInfo } from '../types'
@@ -65,6 +66,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 	}
 
 	setUrl(connectToUrl: string | URL) {
+		if (!window) { console.error(windowMissing); return }
 		const oldBridge = this._bridge
 		const url = generateUrl(connectToUrl)
 		this._url = url
