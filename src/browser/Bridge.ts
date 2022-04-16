@@ -50,6 +50,7 @@ export default class Bridge extends Emitter<Emitting> {
 		if (!this._iframeParentNode) {
 			this._iframeNode.style.opacity = value ? '1' : '0'
 			value ? this._iframeNode.style.removeProperty('pointer-events') : this._iframeNode.style.pointerEvents = 'none'
+			value ? this._iframeNode.style.removeProperty('touch-action') : this._iframeNode.style.touchAction = 'none'
 		}
 	}
 	get usePopup() { return this._usePopup }
@@ -155,6 +156,7 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframeEl.style.maxHeight = '100%'
 			this._iframeNode.style.opacity = '0'
 			this._iframeNode.style.pointerEvents = 'none'
+			this._iframeNode.style.touchAction = 'none'
 			this._iframeNode.style.position = 'fixed'
 			this._iframeNode.style.inset = '0'
     		this._iframeNode.style.zIndex = '1000000'
