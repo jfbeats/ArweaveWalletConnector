@@ -51,6 +51,8 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframeNode.style.opacity = value ? '1' : '0'
 			value ? this._iframeNode.style.removeProperty('pointer-events') : this._iframeNode.style.pointerEvents = 'none'
 			value ? this._iframeNode.style.removeProperty('touch-action') : this._iframeNode.style.touchAction = 'none'
+			value ? this._iframeNode.style.zIndex = '1000000' : this._iframeNode.style.zIndex = '-1000000'
+			value ? this._iframeNode.style.transition = 'opacity 0.2s ease' : this._iframeNode.style.transition = 'opacity 0.2s ease, z-index 0s linear 0.2s'
 		}
 	}
 	get usePopup() { return this._usePopup }
@@ -154,17 +156,17 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframeEl.style.borderRadius = '8px'
 			this._iframeEl.style.maxWidth = '100%'
 			this._iframeEl.style.maxHeight = '100%'
-			this._iframeNode.style.opacity = '0'
-			this._iframeNode.style.pointerEvents = 'none'
-			this._iframeNode.style.touchAction = 'none'
 			this._iframeNode.style.position = 'fixed'
 			this._iframeNode.style.inset = '0'
-    		this._iframeNode.style.zIndex = '1000000'
 			this._iframeNode.style.display = 'flex'
     		this._iframeNode.style.alignItems = 'center'
     		this._iframeNode.style.justifyContent = 'center'
-			this._iframeNode.style.transition = '0.2s opacity ease'
     		this._iframeNode.style.background = '#00000088'
+			this._iframeNode.style.opacity = '0'
+			this._iframeNode.style.pointerEvents = 'none'
+			this._iframeNode.style.touchAction = 'none'
+    		this._iframeNode.style.zIndex = '-1000000'
+			this._iframeNode.style.transition = 'opacity 0.2s ease, z-index 0s linear 0.2s'
 		}
 		this._iframeNode.appendChild(this._iframeEl)
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
