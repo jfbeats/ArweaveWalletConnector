@@ -11,7 +11,6 @@ interface SerializedTx extends Override<TransactionInterface, {
 	tags: { name: string, value: string }[]
 	data: any
 }> {}
-type SignOptions = Parameters<typeof window.crypto.subtle.sign>[0]
 type DecryptOptions = AlgorithmIdentifier | Override<RsaOaepParams, { label?: string }>
 type DispatchResult = {
 	id?: string
@@ -25,7 +24,6 @@ export interface ArweaveInterface {
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
 	dispatch(tx: Transaction, options?: object | Null): Promise<DispatchResult>
-	sign(message: ArrayBufferView, options: SignOptions): Promise<ArrayBufferView>
 	decrypt(message: ArrayBufferView, options: DecryptOptions): Promise<ArrayBufferView>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
@@ -38,11 +36,13 @@ interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
 
 
 
-export function ArweaveApi <TBase extends ConnectionConstructor> (Base: TBase) {
+export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 	return class Arweave extends Base implements ArweaveInterface {
-		
+		constructor(...args: any[]) { super(...args) }
+
 		namespaces = {
 			arweaveWallet: {
+				walletName: 'ArConnect',
 				connect: () => this.address || this.connect(),
 				disconnect: () => this.disconnect(),
 				getActiveAddress: () => this.address,
@@ -53,31 +53,28 @@ export function ArweaveApi <TBase extends ConnectionConstructor> (Base: TBase) {
 				dispatch: (tx: Transaction, options?: any) => this.dispatch(tx, options),
 				encrypt: () => { throw 'not implemented' },
 				decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
-				signature: (data: Uint8Array, options: any) => this.sign(data, options),
 				getPermissions: () => ["ACCESS_ADDRESS", "ACCESS_PUBLIC_KEY", "ACCESS_ALL_ADDRESSES", "SIGN_TRANSACTION", "ENCRYPT", "DECRYPT", "SIGNATURE", "ACCESS_ARWEAVE_CONFIG", "DISPATCH",],
 				getArweaveConfig: () => this.getArweaveConfig(),
 			},
 		}
 
-		postMessage (method: string, params?: any[], options?: PostMessageOptions) {
+		postMessage(method: string, params?: any[], options?: PostMessageOptions) {
 			return super.postMessage(method, params, { ...options, protocol: 'arweave', version: '1.0.0' })
 		}
-		
-		constructor(...args: any[]) { super(...args) }
-	
+
 		async getPublicKey() {
 			const res = await this.postMessage('getPublicKey')
 			if (!is<FromArweaveProvider['getPublicKey']>(res)) { throw 'TypeError' }
 			return res
 		}
-	
+
 		async getArweaveConfig() {
 			const res = await this.postMessage('getArweaveConfig')
 			if (!is<FromArweaveProvider['getArweaveConfig']>(res)) { throw 'TypeError' }
 			delete res.logger
 			return res
 		}
-	
+
 		async signTransaction(tx: Transaction, options?: object | Null) {
 			const { data, chunks, ...txHeader } = tx
 			const res = await this.postMessage('signTransaction', [txHeader, options])
@@ -91,20 +88,13 @@ export function ArweaveApi <TBase extends ConnectionConstructor> (Base: TBase) {
 			})
 			return tx
 		}
-	
+
 		async dispatch(tx: Transaction, options?: object | Null) {
 			const res = await this.postMessage('dispatch', [tx, options], { transfer: true })
 			if (!is<FromArweaveProvider['dispatch']>(res)) { throw 'TypeError' }
 			return res
 		}
-	
-		async sign<T extends ArrayBufferView>(message: T, options: SignOptions) {
-			const res = await this.postMessage('sign', [message, options])
-			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
-			const constructor = message.constructor as new (p: any) => typeof message
-			return new constructor(res.buffer)
-		}
-	
+
 		async decrypt<T extends ArrayBufferView>(message: T, options: DecryptOptions) {
 			const res = await this.postMessage('decrypt', [message, options])
 			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
@@ -121,6 +111,5 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
 	dispatch(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && ArrayBuffer.isView(tx.data) && is<typeof options>(options) }
-	sign(message: ArrayBufferView, options: SignOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 	decrypt(message: ArrayBufferView, options: DecryptOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 }

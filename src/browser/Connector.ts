@@ -46,7 +46,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 	}
 	get connected() { return this._address != null }
 	get url() { return this._bridge?.url }
-	get showIframe () { return this._bridge?.showIframe || false }
+	get showIframe() { return this._bridge?.showIframe || false }
 	get usePopup() { return this._bridge?.usePopup || false }
 	get requirePopup() { return this._bridge?.requirePopup || false }
 	get keepPopup() { return this._bridge?.keepPopup || false }
@@ -109,7 +109,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
-			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], session }) } 
+			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], session }) }
 			catch (e) { console.warn('disconnect request failed') }
 		}
 		oldBridge.off('message', this._listener)

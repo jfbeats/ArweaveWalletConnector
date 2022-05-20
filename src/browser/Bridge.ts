@@ -14,7 +14,7 @@ export type Emitting = {
 	message: {
 		method: string
 		params: unknown
-		session?: number | string | undefined
+		session?: number | string | undefined // todo remove
 	}
 	builtin: { usePopup: boolean }
 	| { requirePopup: boolean }
@@ -40,8 +40,8 @@ export default class Bridge extends Emitter<Emitting> {
 	private _pending: number[] = []
 
 	get url() { return this._url?.origin }
-	get showIframe () { return this._showIframe }
-	set showIframe (value) {
+	get showIframe() { return this._showIframe }
+	set showIframe(value) {
 		if (value === this._showIframe) { return }
 		this._showIframe = value
 		this.deliverMessage({ method: 'showIframe', params: value })
@@ -148,24 +148,24 @@ export default class Bridge extends Emitter<Emitting> {
 		this._iframeNode = document.createElement('div')
 		this._iframeEl = document.createElement('iframe')
 		this._iframeEl.src = this._url.toString()
-		this._iframeEl.allow = 'usb'
-		this._iframeEl.width = WIDTH
-		this._iframeEl.height = HEIGHT
+		this._iframeEl.allow = 'usb; camera; payment; web-share'
 		this._iframeEl.style.border = 'none'
 		if (!this._iframeParentNode) {
+			this._iframeEl.width = WIDTH
+			this._iframeEl.height = HEIGHT
 			this._iframeEl.style.borderRadius = '8px'
 			this._iframeEl.style.maxWidth = '100%'
 			this._iframeEl.style.maxHeight = '100%'
 			this._iframeNode.style.position = 'fixed'
 			this._iframeNode.style.inset = '0'
 			this._iframeNode.style.display = 'flex'
-    		this._iframeNode.style.alignItems = 'center'
-    		this._iframeNode.style.justifyContent = 'center'
-    		this._iframeNode.style.background = '#00000088'
+			this._iframeNode.style.alignItems = 'center'
+			this._iframeNode.style.justifyContent = 'center'
+			this._iframeNode.style.background = '#00000088'
 			this._iframeNode.style.opacity = '0'
 			this._iframeNode.style.pointerEvents = 'none'
 			this._iframeNode.style.touchAction = 'none'
-    		this._iframeNode.style.zIndex = '-1000000'
+			this._iframeNode.style.zIndex = '-1000000'
 			this._iframeNode.style.transition = 'opacity 0.2s ease, z-index 0s linear 0.2s'
 		}
 		this._iframeNode.appendChild(this._iframeEl)
