@@ -16,6 +16,7 @@
 		"isolatedModules": true,
 		"sourceMap": true,
 		"inlineSourceMap": false,
+		"inlineSources": true,
 		"moduleResolution": "node",
 		"pretty": true,
 		"resolveJsonModule": true,

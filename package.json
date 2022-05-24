@@ -6,11 +6,11 @@
 	"module": "lib/index.js",
 	"main": "lib/index.js",
 	"files": [
-		"lib/**/*"
+		"lib",
+		"dist"
 	],
 	"scripts": {
 		"build": "npm run clean && ttsc && node build.js",
-		"prepare": "npm run build",
 		"dev": "npm run build && cd example && npm run dev",
 		"clean": "rimraf dist && rimraf lib"
 	},
