@@ -1,0 +1,9 @@
+name: NPM
+on: workflow_dispatch
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: NPM
+    steps:
+      - run: npm install
+      - run: npm run deploy
