@@ -53,7 +53,7 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframeNode.style.touchAction = value ? '' : 'none'
 			this._iframeNode.style.zIndex = value ? '1000000' : '-1000000'
 			this._iframeNode.style.transform = value ? '' : 'translate(0, 24px)'
-			this._iframeNode.style.transition = value ? '0.36s cubic-bezier(0.22, 1, 0.36, 1)' : 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
+			this._iframeNode.style.transition = value ? 'opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.36s cubic-bezier(0.22, 1, 0.36, 1)' : 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
 		}
 	}
 	get usePopup() { return this._usePopup }
