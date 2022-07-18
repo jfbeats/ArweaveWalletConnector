@@ -49,10 +49,11 @@ export default class Bridge extends Emitter<Emitting> {
 		if (!this._iframeNode) { return }
 		if (!this._iframeParentNode) {
 			this._iframeNode.style.opacity = value ? '1' : '0'
-			value ? this._iframeNode.style.removeProperty('pointer-events') : this._iframeNode.style.pointerEvents = 'none'
-			value ? this._iframeNode.style.removeProperty('touch-action') : this._iframeNode.style.touchAction = 'none'
-			value ? this._iframeNode.style.zIndex = '1000000' : this._iframeNode.style.zIndex = '-1000000'
-			value ? this._iframeNode.style.transition = 'opacity 0.2s ease' : this._iframeNode.style.transition = 'opacity 0.2s ease, z-index 0s linear 0.2s'
+			this._iframeNode.style.pointerEvents = value ? '' : 'none'
+			this._iframeNode.style.touchAction = value ? '' : 'none'
+			this._iframeNode.style.zIndex = value ? '1000000' : '-1000000'
+			this._iframeNode.style.transform = value ? '' : 'translate(0, 24px)'
+			this._iframeNode.style.transition = value ? '0.36s cubic-bezier(0.22, 1, 0.36, 1)' : 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
 		}
 	}
 	get usePopup() { return this._usePopup }
@@ -148,7 +149,7 @@ export default class Bridge extends Emitter<Emitting> {
 		this._iframeNode = document.createElement('div')
 		this._iframeEl = document.createElement('iframe')
 		this._iframeEl.src = this._url.toString()
-		this._iframeEl.allow = 'usb; camera; payment; web-share'
+		this._iframeEl.allow = 'usb; hid; bluetooth; serial; camera; payment; web-share'
 		this._iframeEl.style.border = 'none'
 		if (!this._iframeParentNode) {
 			this._iframeEl.width = WIDTH
@@ -166,7 +167,8 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframeNode.style.pointerEvents = 'none'
 			this._iframeNode.style.touchAction = 'none'
 			this._iframeNode.style.zIndex = '-1000000'
-			this._iframeNode.style.transition = 'opacity 0.2s ease, z-index 0s linear 0.2s'
+			this._iframeNode.style.transform = 'translate(0, 24px)'
+			this._iframeNode.style.transition = 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
 		}
 		this._iframeNode.appendChild(this._iframeEl)
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
