@@ -1,4 +1,4 @@
-import { Tag } from 'arweave/web/lib/transaction.js'
+import { Tag } from './utils/ArweaveTag.js'
 import { is } from 'typescript-is'
 import type { FromProvider, AsVerifier, Override, Null, ConnectionConstructor, PostMessageOptions } from './types'
 import type Transaction from 'arweave/web/lib/transaction'
