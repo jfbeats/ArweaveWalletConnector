@@ -1,6 +1,6 @@
 {
 	"name": "arweave-wallet-connector",
-	"version": "0.0.30",
+	"version": "0.0.31",
 	"description": "Use arweave wallet websites inside your applications",
 	"homepage": "https://jfbeats.github.io/ArweaveWalletConnector",
 	"repository": {
