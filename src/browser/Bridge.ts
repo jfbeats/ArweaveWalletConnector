@@ -207,11 +207,12 @@ export default class Bridge extends Emitter<Emitting> {
 
 	private closePopup(force?: boolean) {
 		if (!this._popup.window || this._popup.window?.closed) { return }
-		// todo test multiple instances behavior
 		// todo if keepPopup -> might require a return back to prev page if on mobile
 		if ((this.keepPopup || this.requirePopup) && !force) { return }
-		this._popup.window.location.href = 'about:blank'
-		this._popup.window.close()
+		const popupWindow = this._popup.window
+		popupWindow.location.href = 'about:blank'
+		popupWindow.close()
+		setTimeout(() => popupWindow.close())
 		this._popup.reject?.()
 		this._popup = {}
 	}
