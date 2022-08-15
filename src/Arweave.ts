@@ -12,7 +12,7 @@ interface SerializedTx extends Override<TransactionInterface, {
 	data: any
 }> {}
 type DecryptOptions = AlgorithmIdentifier | Override<RsaOaepParams, { label?: string }>
-type DispatchResult = {
+export type DispatchResult = {
 	id?: string
 	type?: 'BASE' | 'BUNDLED'
 }
