@@ -29,7 +29,7 @@
 					<div style="display: inline-block; width: 0.5em;" />
 					<input v-model="arInput" style="flex: 1 1 0; text-align: right;" />
 					<div style="display: inline-block; width: 0.5em;" />
-					<span>AR</span>
+					<span>AR<span v-if="arInputConversion" style="font-size: 0.75em; opacity: 0.8"> ({{ arInputConversion }})</span></span>
 				</div>
 				<div style="height: 0.5em;" />
 				<div style="display: flex; align-items: center;">
@@ -43,26 +43,42 @@
 					<Rule />
 					<span>Sign Transaction</span>
 				</button>
+				<button class="button" v-if="wallet.address" @click="dispatchData">
+					<Rule />
+					<span>Dispatch Data</span>
+				</button>
 			</div>
 			<CodeBox :code="code[1]" />
 			<div />
 		</section>
 		<section v-if="currentStep >= 2" id="s2">
-			<template v-if="transactionObject">
-				<div class="row">
+			<template v-if="txUpload.signResult || txUpload.dispatchResult">
+				<template v-if="txUpload.signResult">
+					<div>Why choose signTransaction?</div>
+					<div>After the signature is applied by the user, you have full control on the way that the transaction is submitted to the arweave network</div>
+					<div>For example: when interacting with a smart contract, instead of using dispatch (which would handle everything automatically), use this method to make sure that your interactions are not submitted to a bundler service or, force them to use your own that's compatible with the runtime</div>
+				</template>
+				<template v-if="txUpload.dispatchResult">
+					<div>Why choose dispatch for data?</div>
+					<div v-if="arInput > 0">You can transfer AR tokens using the dispatch method. However, the transfer amount was automatically set to 0 in this example so that the wallet provider can use the preferred bundler service by default. Normally, when transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
+					<div v-else>The wallet provider can select the preferred bundler service. When transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
+					<div>Free storage for users 🤯 (potentially)</div>
+					<div>Data only transactions going through the bundling service are currently subsidized (up to a specific size limit), this allows for accounts with no funds to also be able to commit permanent data</div>
+				</template>
+				<div v-if="txUpload.signResult" class="row">
 					<button class="button" @click="postTransaction">
 						<Upload />
-						<span v-if="!transactionUpload">Upload Transaction</span>
-						<span v-else>Uploaded ({{ transactionUpload }})</span>
+						<span v-if="!txUpload.upload">Upload Transaction</span>
+						<span v-else>Uploaded ({{ txUpload.upload }})</span>
 					</button>
 				</div>
 				<CodeBox :code="code[2]" />
 			</template>
-			<div v-if="transactionError">
-				<CodeBox :code="`// Received error message\n${JSON.stringify(transactionError)}`" />
+			<div v-if="txUpload.error">
+				<CodeBox :code="`// Received error message\n${JSON.stringify(txUpload.error)}`" />
 			</div>
 			<div class="row">
-				<button class="button" @click="() => goTo(3)">
+				<button class="button" @click="() => currentStep = 3">
 					<Rule />
 					<span>Try out other methods</span>
 				</button>
@@ -100,6 +116,7 @@ import Upload from './components/icons/Upload.vue'
 import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
 import type Transaction from 'arweave/web/lib/transaction'
+import type { DispatchResult } from '../../src/Arweave'
 
 // Here, we import an instance of a wrapper class made for the Vue
 // reactivity engine instead of importing the connector directly
@@ -112,6 +129,7 @@ wallet.on('disconnect', () => currentStep.value = 0)
 
 
 const arInput = ref('0.1')
+const arInputConversion = computed(() => arToUsd(arInput.value))
 // using the price of 500MB as default transaction amount
 arweave.transactions.getPrice(1024*1024*512).then(price => arInput.value = displayNum(arweave.ar.winstonToAr(price)))
 watch(arInput, value => transactionData.quantity = arweave.ar.arToWinston(value))
@@ -123,14 +141,17 @@ const transactionData = reactive({
 	data: message.value,
 })
 
-const transactionObject = ref(null as null | Transaction)
-const transactionError = ref(null as any)
-const transactionUpload = ref(null as null | number)
+const getTxUpload = () => ({
+	signResult: null as null | Transaction,
+	dispatchResult: null as null | DispatchResult,
+	error: null as any,
+	upload: null as null | number
+})
+const txUpload = ref(getTxUpload())
+const resetTxUpload = () => txUpload.value = getTxUpload()
 
 const signTransaction = async () => {
-	transactionObject.value = null
-	transactionError.value = null
-	transactionUpload.value = null
+	resetTxUpload()
 	currentStep.value = 1
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
@@ -139,12 +160,34 @@ const signTransaction = async () => {
 		transaction.addTag('Tag-2', 'this is a real transaction')
 		transaction.addTag('Tag-3', 'you can sign it here and not send it on the next page')
 		await wallet.signTransaction(transaction)
-		transactionObject.value = transaction
+		txUpload.value.signResult = transaction
 		currentStep.value = 2
 	} catch (e) {
 		console.error(e)
 		wallet.error = e as string
-		transactionError.value = e
+		txUpload.value.error = e
+		currentStep.value = 2
+	}
+}
+
+const dispatchData = async () => {
+	resetTxUpload()
+	currentStep.value = 1
+	try {
+		const { quantity, ...data } = transactionData
+		const transaction = await arweave.createTransaction({ ...data })
+		transaction.addTag('App-Name', 'Trying out the connector')
+		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
+		transaction.addTag('Tag-2', 'this is a real transaction')
+		transaction.addTag('Tag-3', 'click accept and the wallet will do its best to')
+		transaction.addTag('Tag-3.5', 'include it into the arweave network')
+		const result = await wallet.dispatch(transaction)
+		txUpload.value.dispatchResult = result
+		currentStep.value = 2
+	} catch (e) {
+		console.error(e)
+		wallet.error = e as string
+		txUpload.value.error = e
 		currentStep.value = 2
 	}
 }
@@ -152,12 +195,12 @@ const signTransaction = async () => {
 
 
 const postTransaction = async () => {
-	if (!transactionObject.value) { return }
-	const uploader = await arweave.transactions.getUploader(transactionObject.value)
+	if (!txUpload.value.signResult) { return }
+	const uploader = await arweave.transactions.getUploader(txUpload.value.signResult)
 	while (!uploader.isComplete) {
 		try { await uploader.uploadChunk() } catch (e) { console.error(e) }
 	}
-	transactionUpload.value = uploader.lastResponseStatus
+	txUpload.value.upload = uploader.lastResponseStatus
 }
 
 
@@ -189,26 +232,48 @@ const getArweaveConfig = () => wallet.getArweaveConfig().then(res => otherMethod
 
 
 
-
-// const location = window.location
 const inputUrl = ref(wallet.url)
 const currentStep = ref(0)
 watch(currentStep, async val => {
 	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
-	setTimeout(() => goTo(val), 300)
+	setTimeout(() => {
+		document.querySelector('#s' + val)?.scrollIntoView({ behavior: 'smooth' })
+	}, 300)
 })
-const goTo = async (num: number) => {
-	currentStep.value = num
-	document.querySelector('#s' + num)?.scrollIntoView({ behavior: 'smooth' })
-}
 
-const displayNum = (num: any) => {
+const displayNum = (num: string | number) => {
+	typeof num === 'string' && (num = parseFloat(num))
 	const FractionDigits = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(num)
 	const SignificantDigits = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 1 }).format(num)
 	return FractionDigits.length >= SignificantDigits.length ? FractionDigits : SignificantDigits as any
 }
 
-const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc + `	${e[0]}: ${typeof e[1] === 'object' ? JSON.stringify(e[1]) : `'` + e[1] + `'`}${e[0] == 'quantity' || e[0] == 'reward' ? ` // ${displayNum(arweave.ar.winstonToAr(e[1] as string))} AR` : ''}\n`, '')
+const arToUsd = (ar: string | number) => {
+	if (!ar) { return }
+	typeof ar === 'string' && (ar = parseFloat(ar))
+	if (!conversionRate.value) { return }
+	const result = ar * parseFloat(conversionRate.value)
+	return Intl.NumberFormat([...navigator.languages], { style: 'currency', currency: 'USD'}).format(result)
+}
+
+const displayWinston = (winston: string) => {
+	const ar = parseFloat(arweave.ar.winstonToAr(winston))
+	const displayAR = displayNum(ar)
+	const numUSD = arToUsd(ar)
+	const displayUSD = numUSD ? ` (${numUSD})` : ''
+	return displayAR + ' AR' + displayUSD
+}
+
+const conversionRate = ref(undefined as undefined | string)
+fetch('https://api.redstone.finance/prices/?symbols=AR&provider=redstone').then(res => res.json().then(json => conversionRate.value = json.AR.value))
+
+const commentProps = (e: any) => {
+	if (e[0] == 'quantity' || e[0] == 'reward') { return ` // ${displayWinston(e[1])}` }
+	if (e[0] == 'type') { return ` // 'BUNDLED' | 'BASE'` }
+	return ''
+}
+const txToString = (obj: any) => obj && Object.entries(obj).reduce((acc, e) => acc
+	+ `	${e[0]}: ${typeof e[1] === 'object' ? JSON.stringify(e[1]) : `'` + e[1] + `'`}${commentProps(e)}\n`, '')
 
 function encode (text: string) {
 	const encoder = new TextEncoder()
@@ -236,15 +301,19 @@ await wallet.connect() // on user gesture to avoid blocked popup
 
 `const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
+
+// sign the transaction and upload it yourself
 await wallet.signTransaction(transaction)
+
+// or let the wallet handle the whole process of committing the
+// transaction and uploading its data into the arweave network for you
+const dispatchResult = await wallet.dispatch(transaction)
 `,
 
 
 
-`// Uploading data to the wallet directly is not yet available
-// using arweave.js in the meantime
-{
-${txToString(transactionObject.value)}}
+`${ txUpload.value.dispatchResult ? 'dispatchResult is ' : 'transaction is ' }{
+${txToString(txUpload.value.signResult || txUpload.value.dispatchResult)}}
 `,
 
 
