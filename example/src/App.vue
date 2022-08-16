@@ -33,7 +33,7 @@
 				</div>
 				<div style="height: 0.5em;" />
 				<div style="display: flex; align-items: center;">
-					<span>Message :</span>
+					<span>Data :</span>
 					<div style="display: inline-block; width: 0.5em;" />
 					<input v-model="message" style="flex: 1 1 0; text-align: right;" />
 				</div>
