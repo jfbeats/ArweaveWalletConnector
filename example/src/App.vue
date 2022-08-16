@@ -60,7 +60,7 @@
 				</template>
 				<template v-if="txUpload.dispatchResult">
 					<div>Why choose dispatch for data?</div>
-					<div v-if="arInput > 0">You can transfer AR tokens using the dispatch method. However, the transfer amount was automatically set to 0 in this example so that the wallet provider can use the preferred bundler service by default. Normally, when transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
+					<div v-if="parseFloat(arInput) > 0">You can transfer AR tokens using the dispatch method. However, the transfer amount was automatically set to 0 in this example so that the wallet provider can use the preferred bundler service by default. Normally, when transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
 					<div v-else>The wallet provider can select the preferred bundler service. When transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
 					<div>Free storage for users 🤯 (potentially)</div>
 					<div>Data only transactions going through the bundling service are currently subsidized (up to a specific size limit), this allows for accounts with no funds to also be able to commit permanent data</div>
