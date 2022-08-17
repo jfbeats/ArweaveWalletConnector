@@ -117,6 +117,7 @@ import Arweave from 'arweave'
 import { reactive, ref, computed, watch } from 'vue'
 import type Transaction from 'arweave/web/lib/transaction'
 import type { DispatchResult } from '../../src/Arweave'
+import { track } from './Analytics'
 
 // Here, we import an instance of a wrapper class made for the Vue
 // reactivity engine instead of importing the connector directly
@@ -324,6 +325,15 @@ await wallet.decrypt(message, { name: 'RSA-OAEP' })
 `,
 
 ])
+
+
+
+let maxStep = 0
+watch(currentStep, value => {
+	if (value <= maxStep) { return }
+	maxStep = value
+	track.event('step', value.toString())
+})
 </script>
 
 
