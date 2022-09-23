@@ -29,3 +29,5 @@ export class ReactiveWallet extends ArweaveWebWallet {
 }
 
 export const wallet = new ReactiveWallet({ name: 'Connector Example', logo: `${location.href}placeholder.svg` })
+// @ts-ignore
+window.wallet = wallet

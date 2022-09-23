@@ -332,7 +332,7 @@ let maxStep = 0
 watch(currentStep, value => {
 	if (value <= maxStep) { return }
 	maxStep = value
-	track.event('step', value.toString())
+	track.event(`Step ${value}`)
 })
 </script>
 

@@ -1,4 +1,4 @@
-type EventType = 'step' | 'error'
+type EventType = `Step ${number}` | 'error'
 
 
 
@@ -45,24 +45,19 @@ function init () {
 	let currentRef = document.referrer
 	let cache: string
 	
-	const post = (url: string, data: object, callback: Function) => {
-		const req = new XMLHttpRequest()
-		req.open('POST', url, true)
-		req.setRequestHeader('Content-Type', 'application/json')
-		if (cache) req.setRequestHeader('x-umami-cache', cache)
-		req.onreadystatechange = () => req.readyState === 4 && callback(req.response)
-		req.send(JSON.stringify(data))
-	}
-	
 	const trackingDisabled = () => localStorage && localStorage.getItem('umami.disabled') || dnt && doNotTrack()
 	const collect = (type: string, payload: object) => {
 		if (trackingDisabled()) { return }
-		post(`${root}/api/collect`, { type, payload }, (res: string) => { cache = res })
+		return fetch(`${root}/c`, {
+			method: 'POST',
+			body: JSON.stringify({ type, payload }),
+			headers: Object.assign({ 'Content-Type': 'application/json' }, { ['x-umami-cache']: cache }),
+		}).then(res => res.text()).then(text => (cache = text))
 	}
 	
 	const getPayload = () => ({ website, hostname, screen, language, url: currentUrl })
 	const view = () => collect('pageview', Object.assign(getPayload(), { referrer: currentRef }))
-	const event = (event_type: EventType, event_value: string) => collect('event', Object.assign(getPayload(), { event_type, event_value }))
+	const event = (event_name: EventType, event_data?: string) => collect('event', Object.assign(getPayload(), { event_name, event_data }))
 	
 	const handlePush = (state: any, title: any, url: any) => {
 		if (!url) { return }
