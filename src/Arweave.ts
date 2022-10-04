@@ -1,9 +1,9 @@
-import { Tag } from './utils/ArweaveTag.js'
+import { ArweaveUtils, Tag } from './utils/ArweaveTag.js'
+import type { FromProvider, AsVerifier, Override, Null, ConnectionConstructor, PostMessageOptions } from './types.js'
+import type Transaction from 'arweave/web/lib/transaction.js'
+import type { TransactionInterface } from 'arweave/web/lib/transaction.js'
+import type { ApiConfig } from 'arweave/web/lib/api.js'
 import { is } from 'typescript-is'
-import type { FromProvider, AsVerifier, Override, Null, ConnectionConstructor, PostMessageOptions } from './types'
-import type Transaction from 'arweave/web/lib/transaction'
-import type { TransactionInterface } from 'arweave/web/lib/transaction'
-import type { ApiConfig } from 'arweave/web/lib/api'
 
 // todo find a way to verify that file name extension for import is always specified
 
@@ -11,7 +11,11 @@ interface SerializedTx extends Override<TransactionInterface, {
 	tags: { name: string, value: string }[]
 	data: any
 }> {}
-type DecryptOptions = AlgorithmIdentifier | Override<RsaOaepParams, { label?: string }>
+type SignAlgorithm = { signAlgorithm: 'RSA' }
+type HashAlgorithm = { hashAlgorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' }
+type DecryptOptions = AlgorithmIdentifier | Algorithm
+type SignMessageOptions = HashAlgorithm
+type VerifyMessageOptions = HashAlgorithm & SignAlgorithm
 export type DispatchResult = {
 	id?: string
 	type?: 'BASE' | 'BUNDLED'
@@ -23,8 +27,13 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
+	// signDataItem(tx: Transaction): Promise<Transaction>
+	signMessage(message: ArrayBufferView, options: SignMessageOptions): Promise<ArrayBufferView>
+	verifyMessage(message: ArrayBufferView, signature: ArrayBufferView, publicKey: string, options: VerifyMessageOptions): Promise<boolean>
 	dispatch(tx: Transaction, options?: object | Null): Promise<DispatchResult>
+	encrypt(message: ArrayBufferView, publicKey: string, options: DecryptOptions): Promise<ArrayBufferView>
 	decrypt(message: ArrayBufferView, options: DecryptOptions): Promise<ArrayBufferView>
+	privateHash(message: ArrayBufferView, options: HashAlgorithm): Promise<ArrayBufferView>
 }
 export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
@@ -49,9 +58,13 @@ export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 				getActivePublicKey: () => this.getPublicKey(),
 				getAllAddresses: () => { throw 'not implemented' },
 				getWalletNames: () => { throw 'not implemented' },
+				signature: () => { throw 'deprecated, do not use' },
 				sign: (tx: Transaction, options?: any) => this.signTransaction(tx, options),
 				dispatch: (tx: Transaction, options?: any) => this.dispatch(tx, options),
-				encrypt: () => { throw 'not implemented' },
+				encrypt: async (data: Uint8Array, options: any) => {
+					const key = await this.getPublicKey()
+					return this.encrypt(data, key, options)
+				},
 				decrypt: (data: Uint8Array, options: any) => this.decrypt(data, options),
 				getPermissions: () => ["ACCESS_ADDRESS", "ACCESS_PUBLIC_KEY", "ACCESS_ALL_ADDRESSES", "SIGN_TRANSACTION", "ENCRYPT", "DECRYPT", "SIGNATURE", "ACCESS_ARWEAVE_CONFIG", "DISPATCH",],
 				getArweaveConfig: () => this.getArweaveConfig(),
@@ -94,9 +107,37 @@ export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 			if (!is<FromArweaveProvider['dispatch']>(res)) { throw 'TypeError' }
 			return res
 		}
+		
+		async signMessage<T extends ArrayBufferView>(message: T, options: SignMessageOptions) {
+			const res = await this.postMessage('signMessage', [message, options])
+			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+			const constructor = message.constructor as new (p: any) => typeof message
+			return new constructor(res.buffer)
+		}
+		
+		async verifyMessage(message: ArrayBufferView, signature: ArrayBufferView | string, publicKey: string, options: VerifyMessageOptions) {
+			signature = typeof signature === 'string' ? ArweaveUtils.b64UrlToBuffer(signature) : signature
+			const res = await this.postMessage('verifyMessage', [message, signature, publicKey, options])
+			if (!is<FromArweaveProvider['verifyMessage']>(res)) { throw 'TypeError' }
+			return res
+		}
+		
+		async encrypt<T extends ArrayBufferView>(message: T, publicKey: string, options: DecryptOptions) {
+			const res = await this.postMessage('encrypt', [message, publicKey, options])
+			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+			const constructor = message.constructor as new (p: any) => typeof message
+			return new constructor(res.buffer)
+		}
 
 		async decrypt<T extends ArrayBufferView>(message: T, options: DecryptOptions) {
 			const res = await this.postMessage('decrypt', [message, options])
+			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+			const constructor = message.constructor as new (p: any) => typeof message
+			return new constructor(res.buffer)
+		}
+		
+		async privateHash<T extends ArrayBufferView>(message: T, options: HashAlgorithm) {
+			const res = await this.postMessage('privateHash', [message, options])
 			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
 			const constructor = message.constructor as new (p: any) => typeof message
 			return new constructor(res.buffer)
@@ -111,5 +152,9 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
 	dispatch(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && ArrayBuffer.isView(tx.data) && is<typeof options>(options) }
+	signMessage(message: ArrayBufferView, options: SignMessageOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
+	verifyMessage(message: ArrayBufferView, signature: ArrayBufferView, publicKey: string, options: VerifyMessageOptions) { return ArrayBuffer.isView(message) && ArrayBuffer.isView(signature) && is<typeof publicKey>(publicKey) && is<typeof options>(options) }
+	encrypt(message: ArrayBufferView, publicKey: string, options: DecryptOptions) { return ArrayBuffer.isView(message) && ArrayBuffer.isView(publicKey) && is<typeof options>(options) }
 	decrypt(message: ArrayBufferView, options: DecryptOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
+	privateHash(message: ArrayBufferView, options: HashAlgorithm) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 }

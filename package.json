@@ -10,6 +10,11 @@
 	"type": "module",
 	"module": "lib/index.js",
 	"main": "lib/index.js",
+	"exports": {
+		".": "./lib/index.js",
+		"./node": "./lib/node/index.js",
+		"./lib/node": "./lib/node/index.js"
+	},
 	"files": [
 		"lib",
 		"dist"
@@ -23,9 +28,12 @@
 	"license": "ISC",
 	"dependencies": {
 		"mitt": "^3.0.0",
-		"typescript-is": "^0.19.0"
+		"open": "^8.4.0",
+		"typescript-is": "^0.19.0",
+		"ws": "^8.8.1"
 	},
 	"devDependencies": {
+		"@types/ws": "^8.5.3",
 		"arweave": "^1.10.23",
 		"esbuild": "^0.13.14",
 		"rimraf": "^3.0.2",

@@ -194,7 +194,7 @@ function b64UrlDecode(b64UrlString: string): string {
   return b64UrlString.concat("=".repeat(padding));
 }
 
-const ArweaveUtils = {
+export const ArweaveUtils = {
   b64UrlToString,
   bufferToString,
   stringToBuffer,

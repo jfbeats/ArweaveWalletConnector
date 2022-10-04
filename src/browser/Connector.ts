@@ -3,9 +3,9 @@ import Emitter from '../utils/Emitter.js'
 import { generateUrl } from '../utils/Utils.js'
 import { load, unload } from '../utils/Inject.js'
 import { windowMissing } from '../utils/Errors.js'
-import { is } from 'typescript-is'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
-import type { Connection, AppInfo, PostMessageOptions, Flatten, UnionToIntersection, ProtocolInfo } from '../types'
+import type { Connection, AppInfo, PostMessageOptions, Flatten, UnionToIntersection, ProtocolInfo } from '../types.js'
+import { is } from 'typescript-is'
 
 
 
