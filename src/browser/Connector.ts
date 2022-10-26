@@ -16,7 +16,7 @@ type Emitting = BridgeMap & {
 	change: string | undefined
 }
 
-// todo disable multiple instances
+
 
 export default class BrowserConnector extends Emitter<Emitting> implements Connection {
 	private static _bridges: { [url: string]: { bridge: Bridge, sessions: number[] } } = {}
@@ -62,7 +62,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 		}
 		this.on('connect', () => load(this as any))
 		this.on('disconnect', () => unload(this as any))
-		if (connectToUrl) { this.setUrl(connectToUrl) }
+		if (connectToUrl) { this._url = generateUrl(connectToUrl) }
 	}
 
 	setUrl(connectToUrl: string | URL) {
@@ -90,7 +90,8 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 	}
 
 	async connect(options?: object): Promise<string> {
-		if (!this._bridge) { this._url && this.setUrl(this._url) }
+		if (!this._url) { throw 'Connect failed: URL missing' }
+		if (!this._bridge) { this.setUrl(this._url) }
 		const promise = new Promise<string>((resolve, reject) => {
 			this.once('change', address => address ? resolve(address) : reject())
 		}).finally(() => this._bridge?.completeRequest())
@@ -109,7 +110,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 		this._bridge = undefined
 		this._session = 0
 		if (fromMethod) {
-			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], session }) }
+			try { await oldBridge.postMessage({ method: 'disconnect', params: [options], session }, { timeout: 5000 }) }
 			catch (e) { console.warn('disconnect request failed') }
 		}
 		oldBridge.off('message', this._listener)
@@ -124,7 +125,8 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 
 	postMessage(method: string, params?: any[], options?: PostMessageOptions & ProtocolInfo) {
 		return new Promise((resolve, reject) => {
-			if (!this._bridge) { return reject('URL missing') }
+			if (!this._url) { throw 'Post message failed: URL missing' }
+			if (!this._bridge) { throw 'Post message failed: URL not loaded, call setUrl or connect first' }
 			this.once('disconnect', reject)
 			this._bridge.postMessage({ method, params, session: this._session, protocol: options?.protocol, version: options?.version }, options).then(resolve).catch(reject)
 		})

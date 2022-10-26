@@ -90,6 +90,7 @@ export default class Bridge extends Emitter<Emitting> {
 		if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
 		this._url.hash = new URLSearchParams(urlInfo).toString()
 		window.addEventListener('message', this.listener)
+		this.openIframe()
 	}
 
 	destructor(options?: object) {
@@ -212,7 +213,12 @@ export default class Bridge extends Emitter<Emitting> {
 		const popupWindow = this._popup.window
 		popupWindow.location.href = 'about:blank'
 		popupWindow.close()
-		setTimeout(() => popupWindow.close())
+		let i = 0
+		const timer = setInterval(() => {
+			if (i > 50) { clearInterval(timer) } else { i++ }
+			if (popupWindow && !popupWindow.closed) { return popupWindow.close() }
+			clearInterval(timer)
+		}, 100)
 		this._popup.reject?.()
 		this._popup = {}
 	}

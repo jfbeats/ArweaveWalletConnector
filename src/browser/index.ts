@@ -1,4 +1,4 @@
 import { ArweaveApi } from '../Arweave.js'
-import Connector from './Connector.js'
+import { ReactiveConnector } from './Reactive.js'
 
-export const ArweaveWebWallet = ArweaveApi(Connector)
+export const ArweaveWebWallet = ArweaveApi(ReactiveConnector)
