@@ -165,7 +165,6 @@ const signTransaction = async () => {
 		currentStep.value = 2
 	} catch (e) {
 		console.error(e)
-		wallet.error = e as string
 		txUpload.value.error = e
 		currentStep.value = 2
 	}
@@ -187,7 +186,6 @@ const dispatchData = async () => {
 		currentStep.value = 2
 	} catch (e) {
 		console.error(e)
-		wallet.error = e as string
 		txUpload.value.error = e
 		currentStep.value = 2
 	}

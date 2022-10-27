@@ -27,7 +27,7 @@ const data = reactive({
 	loading: false,
 })
 const connect = () => {
-	wallet.setUrl(model.value || wallet.url)
+	wallet.setUrl(model.value || wallet.url!)
 	wallet.connect()
 	data.loading = true
 	wallet.once('change', () => data.loading = false)
