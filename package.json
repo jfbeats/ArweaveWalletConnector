@@ -20,7 +20,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "ttsc && node build.js && cd example && npm run build",
+		"build": "ttsc && node build.js",
 		"dev": "npm run build && cd example && npm run dev",
 		"clean": "rimraf dist && rimraf lib",
 		"deploy": "npm run clean && npm run build && npm publish"
