@@ -66,7 +66,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 	}
 
 	setUrl(connectToUrl: string | URL) {
-		if (!window) { console.error(windowMissing); return }
+		if (typeof window === 'undefined') { console.error(windowMissing); return }
 		const oldBridge = this._bridge
 		const url = generateUrl(connectToUrl)
 		this._url = url
