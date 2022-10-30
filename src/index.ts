@@ -1,4 +1,4 @@
 export type { AppInfo } from './types.js'
-
-export { ArweaveWebWallet } from './browser'
+export type { State } from './browser/index.js'
+export { ArweaveWebWallet } from './browser/index.js'
 export { ArweaveApi, ArweaveVerifier } from './Arweave.js'
