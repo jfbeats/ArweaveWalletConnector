@@ -65,7 +65,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 		if (connectToUrl) { this._url = generateUrl(connectToUrl) }
 	}
 
-	setUrl(connectToUrl: string | URL) {
+	setUrl(connectToUrl: string | URL, load?: boolean) {
 		if (typeof window === 'undefined') { console.error(windowMissing); return }
 		const oldBridge = this._bridge
 		const url = generateUrl(connectToUrl)
@@ -73,7 +73,7 @@ export default class BrowserConnector extends Emitter<Emitting> implements Conne
 		if (this._bridge?.url === url.origin) { return }
 		this.disconnect()
 		if (!BrowserConnector._bridges[url.origin]) {
-			this._bridge = new Bridge(url, this._appInfo)
+			this._bridge = new Bridge(url, this._appInfo, load)
 			BrowserConnector._bridges[url.origin] = { bridge: this._bridge, sessions: [] }
 		} else {
 			this._bridge = BrowserConnector._bridges[url.origin].bridge

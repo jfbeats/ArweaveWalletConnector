@@ -78,7 +78,7 @@ export default class Bridge extends Emitter<Emitting> {
 
 
 
-	constructor(connectToUrl: URL, appInfo?: AppInfo) {
+	constructor(connectToUrl: URL, appInfo?: AppInfo, load?: boolean) {
 		super()
 		this._iframeParentNode = appInfo?.iframeParentNode
 		this._url = connectToUrl
@@ -91,7 +91,7 @@ export default class Bridge extends Emitter<Emitting> {
 			if (appInfo?.logo) { urlInfo.logo = appInfo.logo }
 			this._url.hash = new URLSearchParams(urlInfo).toString()
 			window.addEventListener('message', this.listener)
-			this.openIframe()
+			if (load) { this.openIframe() }
 		}
 	}
 
