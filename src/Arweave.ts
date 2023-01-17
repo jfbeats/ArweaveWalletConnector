@@ -1,6 +1,7 @@
 import { ArweaveUtils, Tag } from './utils/ArweaveTag.js'
 import type { FromProvider, AsVerifier, Override, Null, ConnectionConstructor, PostMessageOptions } from './types.js'
 import type Transaction from 'arweave/web/lib/transaction.js'
+import type { DataItemCreateOptions } from 'arbundles'
 import type { TransactionInterface } from 'arweave/web/lib/transaction.js'
 import type { ApiConfig } from 'arweave/web/lib/api.js'
 import { is } from 'typescript-is'
@@ -8,9 +9,14 @@ import { is } from 'typescript-is'
 // todo find a way to verify that file name extension for import is always specified
 
 interface SerializedTx extends Override<TransactionInterface, {
-	tags: { name: string, value: string }[]
 	data: any
+	tags: { name: string, value: string }[]
 }> {}
+interface DataItemParams extends Override<DataItemCreateOptions, {
+	data?: string
+	signature: string
+}> {}
+type DataItemParamsUnsigned = Omit<DataItemParams, 'signature'>
 type SignAlgorithm = { signAlgorithm: 'RSA' }
 type HashAlgorithm = { hashAlgorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' }
 type DecryptOptions = AlgorithmIdentifier | Algorithm
@@ -27,7 +33,7 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	// signDataItem(tx: Transaction): Promise<Transaction>
+	signDataItem(tx: DataItemParamsUnsigned): Promise<DataItemParams>
 	signMessage(message: ArrayBufferView, options: SignMessageOptions): Promise<ArrayBufferView>
 	verifyMessage(message: ArrayBufferView, signature: ArrayBufferView, publicKey: string, options: VerifyMessageOptions): Promise<boolean>
 	dispatch(tx: Transaction, options?: object | Null): Promise<DispatchResult>
@@ -39,6 +45,7 @@ export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null): Promise<{
 		id: string, owner?: string | Null, tags?: SerializedTx['tags'] | Null, signature: string, reward?: string | Null }>
+	signDataItem(tx: DataItemParamsUnsigned): Promise<DataItemParams>
 	dispatch(tx: Partial<SerializedTx>, options?: object | Null): Promise<DispatchResult>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
@@ -101,6 +108,12 @@ export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 			})
 			return tx
 		}
+		
+		async signDataItem(tx: DataItemParamsUnsigned) {
+			const res = await this.postMessage('signDataItem', [tx])
+			if (!is<FromArweaveProvider['signDataItem']>(res)) { throw 'TypeError' }
+			return res
+		}
 
 		async dispatch(tx: Transaction, options?: object | Null) {
 			const res = await this.postMessage('dispatch', [tx, options], { transfer: true })
@@ -151,6 +164,7 @@ export class ArweaveVerifier implements AsVerifier<ArweaveProviderInterface> {
 	getPublicKey() { return true }
 	getArweaveConfig() { return true }
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && is<typeof options>(options) }
+	signDataItem(tx: DataItemParamsUnsigned) { return is<typeof tx>(tx) }
 	dispatch(tx: Partial<SerializedTx>, options?: object | Null) { return is<typeof tx>(tx) && ArrayBuffer.isView(tx.data) && is<typeof options>(options) }
 	signMessage(message: ArrayBufferView, options: SignMessageOptions) { return ArrayBuffer.isView(message) && is<typeof options>(options) }
 	verifyMessage(message: ArrayBufferView, signature: ArrayBufferView, publicKey: string, options: VerifyMessageOptions) { return ArrayBuffer.isView(message) && ArrayBuffer.isView(signature) && is<typeof publicKey>(publicKey) && is<typeof options>(options) }

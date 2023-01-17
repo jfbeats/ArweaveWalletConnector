@@ -36,7 +36,16 @@ export class ReactiveConnector extends BrowserConnector {
 		super(appInfo, parseState(options?.state)?.url)
 		this.setState(options?.state)
 		if (ReactiveConnector.#instance) { return ReactiveConnector.#instance }
-		ReactiveConnector.#instance = this
+		ReactiveConnector.#instance = new Proxy(this, {
+			get: (target: any, p: string | symbol, receiver: any) => {
+				return (p in target.#state.value) ? target.#state.value[p] : target[p]
+			},
+			set: (target, p, value, receiver) => {
+				if (p === 'keepPopup') { super.keepPopup = value }
+				else { target[p] = value }
+				return true
+			}
+		})
 		let isUnloading = false
 		this.on('connect', (address) => {
 			const url = super.url
@@ -59,21 +68,18 @@ export class ReactiveConnector extends BrowserConnector {
 				localStorage.removeItem(this.#localStorageKey)
 			}
 		}
+		return ReactiveConnector.#instance
 	}
-	get state () { return this.#state.value }
-	get url () { return this.#state.value.url }
-	get address () { return this.#state.value.address }
-	get connected () { return this.#state.value.connected }
-	get showIframe () { return this.#state.value.showIframe}
-	get usePopup () { return this.#state.value.usePopup}
-	get requirePopup () { return this.#state.value.requirePopup}
-	get keepPopup () { return this.#state.value.keepPopup }
-	set keepPopup (value) { super.keepPopup = value }
-	connect (options?: object) {
-		if (this.url && this.url !== super.url) { super.setUrl(this.url) }
-		return super.connect(options)
+	override setUrl = (connectToUrl: string | URL, load?: boolean) => {
+		super.setUrl(connectToUrl, load);
+		this.updateState({ url: super.url })
 	}
-	setState <T extends AnyReactive<Partial<State>> | undefined> (state: T) {
+	subscribe = (handler: StateFunction<State>) => {
+		this.#subs.push(handler)
+		handler(this.#state.value)
+		return () => this.#subs.filter(sub => sub !== handler)
+	}
+	private setState = <T extends AnyReactive<Partial<State>> | undefined> (state: T) => {
 		const instance = ReactiveConnector.#instance ?? this
 		if (state && Array.isArray(state)) { instance.#setState = state[1] }
 		if (state && 'set' in state) { instance.#setState = state.set }
@@ -82,12 +88,7 @@ export class ReactiveConnector extends BrowserConnector {
 		if (Object.keys(init.newProps).length) { instance.updateState(init.newProps) }
 		return state
 	}
-	subscribe (handler: StateFunction<State>) {
-		this.#subs.push(handler)
-		handler(this.#state.value)
-		return () => this.#subs.filter(sub => sub !== handler)
-	}
-	private updateState (state?: Partial<State>) {
+	private updateState = (state?: Partial<State>) => {
 		if (!state) { return }
 		Object.assign(this.#state.value, state)
 		if (this.#setState) { this.#setState({ ...this.#state.value }) }
@@ -128,6 +129,8 @@ function applyDefaultsRef (state: Ref<Partial<State> | undefined>) {
 
 function applyDefaults (state: Partial<State> = {}) {
 	const defaultState: State = {
+		url: undefined,
+		address: undefined,
 		connected: false,
 		showIframe: false,
 		usePopup: false,

@@ -34,6 +34,7 @@
 	},
 	"devDependencies": {
 		"@types/ws": "^8.5.3",
+		"arbundles": "^0.7.3",
 		"arweave": "^1.10.23",
 		"esbuild": "^0.13.14",
 		"rimraf": "^3.0.2",

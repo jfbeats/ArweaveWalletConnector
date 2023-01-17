@@ -19,7 +19,7 @@ import Button from './WalletSelectorIcons.vue';
 
 const props = defineProps(['modelValue', 'icon', 'placeholder', 'actions', 'autocomplete', 'mask', 'disabled', 'id'])
 const emit = defineEmits(['update:modelValue'])
-const model = computed<string>({ // url should be persisted to storage to remember last selected wallet
+const model = computed<string>({
 	get () { return props.modelValue },
 	set (value) { emit('update:modelValue', value) }
 })

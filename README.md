@@ -29,8 +29,9 @@ For your users:
 - Available on any device, including mobile
 
 For developers:
-- Fully typed
+- Does not depend on any infrastructure (no api key)
 - Final - no breaking changes, only improvements
+- Fully typed
 - Compatible with [arweave-js](https://github.com/ArweaveTeam/arweave-js)
 - Compatible with other tools instantiated using an [arweave-js](https://github.com/ArweaveTeam/arweave-js) api object (e.g. smartweave clients)
 - Compatible with anything else using the injected `window.arweaveWallet` object
