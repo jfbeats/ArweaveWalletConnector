@@ -231,7 +231,7 @@ const getArweaveConfig = () => wallet.getArweaveConfig().then(res => otherMethod
 
 
 
-const inputUrl = ref(wallet.url)
+const inputUrl = ref('')
 const currentStep = ref(0)
 watch(currentStep, async val => {
 	while (document.hidden) { await new Promise<void>(r => setTimeout(() => r(), 100)) }
@@ -287,12 +287,12 @@ function decode (buffer: BufferSource) {
 const code = computed(() => [
 `import { ArweaveWebWallet } from 'arweave-wallet-connector'
 
-const wallet = new ArweaveWebWallet({
+const wallet = new ArweaveWebWallet({ // Initialize the wallet as soon as possible to get instant auto reconnect
 	name: 'Connector Example',
 	logo: '${location.href}placeholder.svg'
 })
 
-wallet.setUrl('${inputUrl.value}')
+wallet.setUrl('${inputUrl.value || wallet.url}')
 await wallet.connect() // on user gesture to avoid blocked popup
 `,
 

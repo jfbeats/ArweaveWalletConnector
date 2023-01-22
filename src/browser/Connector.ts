@@ -10,7 +10,7 @@ import { is } from 'typescript-is'
 
 
 type BridgeMap = Flatten<UnionToIntersection<InternalBridgeMap['builtin']>>
-type Emitting = BridgeMap & {
+export type Emitting = BridgeMap & {
 	connect: string
 	disconnect: undefined
 	change: string | undefined

@@ -29,8 +29,9 @@ For your users:
 - Available on any device, including mobile
 
 For developers:
-- Fully typed
+- Does not depend on any infrastructure (no api key)
 - Final - no breaking changes, only improvements
+- Fully typed
 - Compatible with [arweave-js](https://github.com/ArweaveTeam/arweave-js)
 - Compatible with other tools instantiated using an [arweave-js](https://github.com/ArweaveTeam/arweave-js) api object (e.g. smartweave clients)
 - Compatible with anything else using the injected `window.arweaveWallet` object
@@ -80,8 +81,68 @@ const arconnectLikeAPI = wallet.namespaces.arweaveWallet
 
 After the user has completed the connection flow (sucessful `wallet.connect()`), the connector will begin to receive instructions sent to the `window.arweaveWallet` object from arweave-js, smartweave clients, etc. On disconnect, it will restore any previously available endpoint injected by browser extensions
 
-### For Vue developpers
+## Reactive Javascript Frameworks
 
-[Reactive wrapper for the Wallet class](example/src/ReactiveWallet.ts)
+The module doesn't import any framework component but provides ways to make the instance properties reactive
+
+### For Vue
+
+Pass a `ref` or a `reactive` object instance. The wallet properties will become reactive and can be used in templates
+
+```html
+<script setup>
+const state = ref({ url: 'arweave.app' })
+const wallet = new ArweaveWebWallet({ ... }, { state })
+</script>
+
+<template>
+    <p @click="() => wallet.connect()">Connect</p>
+    <p>{{ wallet.address }}</p>
+</template>
+```
 
 [Address bar component](example/src/components/WalletSelector.vue)
+
+### For Svelte
+
+Use `$wallet` in your components
+
+```html
+<script>
+const state = { url: 'arweave.app' }
+const wallet = new ArweaveWebWallet({ ... }, { state })
+</script>
+
+<div>
+    <p on:click={() => wallet.connect()}>Connect</p>
+    <p>{$wallet.address}</p>
+</div>
+```
+
+### For React
+
+Call `wallet.setState(useState(wallet.state))` in your component and the wallet will use the hook
+
+```js
+const state = { url: 'arweave.app' }
+const wallet = new ArweaveWebWallet({ ... }, { state })
+
+function App () {
+    wallet.setState(useState(wallet.state))
+    return (
+        <div>
+            <p onClick={() => wallet.connect()}>Connect</p>
+            <p>{wallet.address}</p>
+        </div>
+    )
+}
+```
+
+
+
+
+
+
+
+
+

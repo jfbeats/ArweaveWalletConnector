@@ -149,44 +149,55 @@ export default class Bridge extends Emitter<Emitting> {
 
 	private openIframe() {
 		if (this._iframeEl) { return }
-		this._iframeNode = document.createElement('div')
-		this._iframeEl = document.createElement('iframe')
-		this._iframeEl.src = this._url.toString()
-		this._iframeEl.allow = 'usb; hid; bluetooth; serial; camera; payment; web-share'
-		this._iframeEl.style.border = 'none'
-		if (!this._iframeParentNode) {
-			this._iframeEl.width = WIDTH
-			this._iframeEl.height = HEIGHT
-			this._iframeEl.style.borderRadius = '8px'
-			this._iframeEl.style.maxWidth = '100%'
-			this._iframeEl.style.maxHeight = '100%'
-			this._iframeNode.style.position = 'fixed'
-			this._iframeNode.style.inset = '0'
-			this._iframeNode.style.display = 'flex'
-			this._iframeNode.style.alignItems = 'center'
-			this._iframeNode.style.justifyContent = 'center'
-			this._iframeNode.style.background = '#00000088'
-			this._iframeNode.style.opacity = '0'
-			this._iframeNode.style.pointerEvents = 'none'
-			this._iframeNode.style.touchAction = 'none'
-			this._iframeNode.style.zIndex = '-1000000'
-			this._iframeNode.style.transform = 'translate(0, 24px)'
-			this._iframeNode.style.transition = 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
-		}
-		this._iframeNode.appendChild(this._iframeEl)
 		const promise = new Promise((resolve, reject) => this._iframe = { resolve, reject })
 		this._iframe.promise = promise
-		const injectIframe = () => {
-			if (this._iframeParentNode) { this._iframeParentNode.appendChild(this._iframeNode!) }
-			else { document.body.appendChild(this._iframeNode!) }
-			this._iframe.window = this._iframeEl?.contentWindow
+		const existing = Array.from(document.querySelectorAll('iframe')).find(el => { try {
+			const url = new URL(el.src)
+			return url.origin === this.url
+		} catch (e) {} })
+		if (existing) {
+			this._iframeEl = existing
+			this._iframe.window = this._iframeEl.contentWindow
+			this.postMessage({ method: 'ready' })
+		} else {
+			this._iframeNode = document.createElement('div')
+			this._iframeEl = document.createElement('iframe')
+			this._iframeEl.src = this._url.toString()
+			this._iframeEl.allow = 'usb; hid; bluetooth; serial; camera; payment; web-share'
+			this._iframeEl.style.border = 'none'
+			if (!this._iframeParentNode) {
+				this._iframeEl.width = WIDTH
+				this._iframeEl.height = HEIGHT
+				this._iframeEl.style.borderRadius = '8px'
+				this._iframeEl.style.maxWidth = '100%'
+				this._iframeEl.style.maxHeight = '100%'
+				this._iframeNode.style.position = 'fixed'
+				this._iframeNode.style.inset = '0'
+				this._iframeNode.style.display = 'flex'
+				this._iframeNode.style.alignItems = 'center'
+				this._iframeNode.style.justifyContent = 'center'
+				this._iframeNode.style.background = '#00000088'
+				this._iframeNode.style.opacity = '0'
+				this._iframeNode.style.pointerEvents = 'none'
+				this._iframeNode.style.touchAction = 'none'
+				this._iframeNode.style.zIndex = '-1000000'
+				this._iframeNode.style.transform = 'translate(0, 24px)'
+				this._iframeNode.style.transition = 'opacity 0.1s ease, transform 0.1s ease, z-index 0s linear 0.1s'
+			}
+			this._iframeNode.appendChild(this._iframeEl)
+			const injectIframe = () => {
+				if (this._iframeParentNode) { this._iframeParentNode.appendChild(this._iframeNode!) }
+				else { document.body.appendChild(this._iframeNode!) }
+				this._iframe.window = this._iframeEl?.contentWindow
+			}
+			if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
+			else { document.addEventListener('DOMContentLoaded', injectIframe) }
 		}
-		if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }
-		else { document.addEventListener('DOMContentLoaded', injectIframe) }
 	}
 
 	private closeIframe() {
 		this._iframeEl?.setAttribute('src', 'about:blank')
+		this._iframeEl?.remove()
 		this._iframeNode?.remove()
 		this._iframeNode = undefined
 		this._iframeEl = undefined
