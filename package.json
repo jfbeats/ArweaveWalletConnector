@@ -21,6 +21,7 @@
 	],
 	"scripts": {
 		"build": "ttsc && node build.js",
+		"build-all": "ttsc && node build.js && cd example && npm run build",
 		"dev": "npm run build && cd example && npm run dev",
 		"clean": "rimraf dist && rimraf lib",
 		"deploy": "npm run clean && npm run build && npm publish"
@@ -34,7 +35,6 @@
 	},
 	"devDependencies": {
 		"@types/ws": "^8.5.3",
-		"arbundles": "^0.7.3",
 		"arweave": "^1.10.23",
 		"esbuild": "^0.13.14",
 		"rimraf": "^3.0.2",

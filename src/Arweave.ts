@@ -1,7 +1,7 @@
 import { ArweaveUtils, Tag } from './utils/ArweaveTag.js'
 import type { FromProvider, AsVerifier, Override, Null, ConnectionConstructor, PostMessageOptions } from './types.js'
 import type Transaction from 'arweave/web/lib/transaction.js'
-import type { DataItemCreateOptions } from 'arbundles'
+// import type { DataItemCreateOptions } from 'arbundles'
 import type { TransactionInterface } from 'arweave/web/lib/transaction.js'
 import type { ApiConfig } from 'arweave/web/lib/api.js'
 import { is } from 'typescript-is'
@@ -12,6 +12,15 @@ interface SerializedTx extends Override<TransactionInterface, {
 	data: any
 	tags: { name: string, value: string }[]
 }> {}
+interface DataItemCreateOptions {
+	data?: never;
+	target?: string;
+	anchor?: string;
+	tags?: {
+		name: string;
+		value: string;
+	}[];
+}
 export interface DataItemParams extends Override<DataItemCreateOptions, {
 	data?: string
 	signature: string
