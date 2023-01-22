@@ -12,7 +12,7 @@ interface SerializedTx extends Override<TransactionInterface, {
 	data: any
 	tags: { name: string, value: string }[]
 }> {}
-interface DataItemParams extends Override<DataItemCreateOptions, {
+export interface DataItemParams extends Override<DataItemCreateOptions, {
 	data?: string
 	signature: string
 }> {}
