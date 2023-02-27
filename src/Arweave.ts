@@ -26,8 +26,9 @@ export interface DataItemParams extends Override<DataItemCreateOptions, {
 	signature: string
 }> {}
 type DataItemParamsUnsigned = Omit<DataItemParams, 'signature'>
-type SignAlgorithm = { signAlgorithm: 'RSA' }
-type HashAlgorithm = { hashAlgorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' }
+type SignAlgorithm = { signAlgorithm?: 'RSA' }
+type HashAlgorithm = { hashAlgorithm?: 'SHA-256' | 'SHA-384' | 'SHA-512' }
+type PrivateHashOptions = HashAlgorithm & { scoped?: false }
 type DecryptOptions = AlgorithmIdentifier | Algorithm
 type SignMessageOptions = HashAlgorithm
 type VerifyMessageOptions = HashAlgorithm & SignAlgorithm
