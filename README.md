@@ -92,7 +92,7 @@ Pass a `ref` or a `reactive` object instance. The wallet properties will become 
 ```html
 <script setup>
 const state = ref({ url: 'arweave.app' })
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 </script>
 
 <template>
@@ -110,7 +110,7 @@ Use `$wallet` in your components
 ```html
 <script>
 const state = { url: 'arweave.app' }
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 </script>
 
 <div>
@@ -125,7 +125,7 @@ Call `wallet.setState(useState(wallet.state))` in your component and the wallet 
 
 ```js
 const state = { url: 'arweave.app' }
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 
 function App () {
     wallet.setState(useState(wallet.state))
