@@ -1,43 +1,45 @@
-import typescript, { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import ttypescript from 'ttypescript'
+import typescript from '@rollup/plugin-typescript'
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import { RollupOptions } from 'rollup'
 
 
 
-export default (args: { [key: string]: true | undefined }) => {
-	
-	const getParam = (param: string) => {
-		if (!args[param]) { return }
-		delete args[param]
-		return true
-	}
-	
-	const getConfig = (options: RollupOptions) => {
-		const out = Array.isArray(options.output) ? options.output[0].dir : options.output?.dir
-		
+export default async (args: { [key: string]: true | undefined }) => {
+	const getParam = (param: string) => { if (!args[param]) { return } else { delete args[param]; return true } }
+	const getConfig = async (options: RollupOptions) => {
+		const outDir = Array.isArray(options.output) ? options.output[0].dir : options.output?.dir
+		const declaration = true
+		const optionsPluginsAwaited = await options.plugins || []
+		const optionsPlugins = Array.isArray(optionsPluginsAwaited) ? optionsPluginsAwaited : [optionsPluginsAwaited]
 		return {
 			...options,
 			plugins: [
 				typescript({
 					tsconfig: './tsconfig.json',
 					typescript: ttypescript,
-					declaration: out === 'lib',
-					outDir: out,
-					declarationDir: out,
+					outDir,
+					declaration,
+					declarationDir: declaration ? outDir : undefined,
 					exclude: 'rollup.config.ts',
 				}),
 				resolve(),
 				commonjs(),
-			],
+				...optionsPlugins,
+			]
 		} as RollupOptions
 	}
-	
-	const buildOptions: (RollupOptions | undefined)[] = [
-		getParam('browser') && getConfig({ input: 'src/index.ts', output: { dir: 'lib', format: 'esm' } }),
-		getParam('node') && getConfig({ input: 'src/node/index.ts', output: { dir: 'lib/node', format: 'esm' } }),
+	const buildArray: (RollupOptions | undefined)[] = [
+		getParam('browser') && await getConfig({
+			input: 'src/index.ts',
+			output: { dir: 'lib', format: 'esm' },
+		}),
+		getParam('node') && await getConfig({
+			input: 'src/node/index.ts',
+			output: { dir: 'lib/node', format: 'esm' },
+			external: ['ws', 'open'],
+		}),
 	]
-	
-	return buildOptions.filter((e): e is NonNullable<typeof e> => !!e)
+	return buildArray.filter((e): e is NonNullable<typeof e> => !!e)
 }
