@@ -160,12 +160,17 @@ export default class Bridge extends Emitter<Emitting> {
 			this._iframe.window = this._iframeEl.contentWindow
 			this.postMessage({ method: 'ready' })
 		} else {
-			this._iframeNode = document.createElement('div')
+			this._iframeNode = this._iframeParentNode as HTMLElement ?? document.createElement('div')
 			this._iframeEl = document.createElement('iframe')
 			this._iframeEl.src = this._url.toString()
 			this._iframeEl.allow = 'usb; hid; bluetooth; serial; camera; payment; web-share'
+			this._iframeEl.setAttribute('allowTransparency', 'true')
 			this._iframeEl.style.border = 'none'
-			if (!this._iframeParentNode) {
+			if (this._iframeParentNode) {
+				this._iframeEl.style.backgroundColor = 'transparent'
+				this._iframeEl.style.width = '100%'
+				this._iframeEl.style.height = '100%'
+			} else {
 				this._iframeEl.width = WIDTH
 				this._iframeEl.height = HEIGHT
 				this._iframeEl.style.borderRadius = '8px'
@@ -186,8 +191,7 @@ export default class Bridge extends Emitter<Emitting> {
 			}
 			this._iframeNode.appendChild(this._iframeEl)
 			const injectIframe = () => {
-				if (this._iframeParentNode) { this._iframeParentNode.appendChild(this._iframeNode!) }
-				else { document.body.appendChild(this._iframeNode!) }
+				if (!this._iframeParentNode) { document.body.appendChild(this._iframeNode!) }
 				this._iframe.window = this._iframeEl?.contentWindow
 			}
 			if (document.readyState === 'complete' || document.readyState === 'interactive') { injectIframe() }

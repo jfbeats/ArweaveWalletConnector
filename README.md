@@ -92,7 +92,7 @@ Pass a `ref` or a `reactive` object instance. The wallet properties will become 
 ```html
 <script setup>
 const state = ref({ url: 'arweave.app' })
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 </script>
 
 <template>
@@ -110,7 +110,7 @@ Use `$wallet` in your components
 ```html
 <script>
 const state = { url: 'arweave.app' }
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 </script>
 
 <div>
@@ -125,7 +125,7 @@ Call `wallet.setState(useState(wallet.state))` in your component and the wallet 
 
 ```js
 const state = { url: 'arweave.app' }
-const wallet = new ArweaveWebWallet({ ... }, { state })
+const wallet = new ArweaveWebWallet({ /* ... */ }, { state })
 
 function App () {
     wallet.setState(useState(wallet.state))
@@ -138,7 +138,20 @@ function App () {
 }
 ```
 
+## Wallet Server
 
+If your app is running in a context with the ability to create a web socket server (node, native apps, etc.), it is possible to communicate to wallet providers through that link 
+
+### Node.js
+
+From a server running on the local machine. For example, can be used to request a service fee or data upload
+
+```js
+import { ArweaveWalletServer } from 'arweave-wallet-connector/lib/node'
+const wallet = new ArweaveWalletServer('arweave.app')
+await wallet.connect()
+await wallet.signTransaction( /* ... */ )
+```
 
 
 
