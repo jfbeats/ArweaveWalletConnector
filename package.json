@@ -21,10 +21,12 @@
 	],
 	"scripts": {
 		"build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --browser --node",
-		"build-all": "npm run build && cd example && npm run build",
-		"dev": "npm run build && cd example && npm run dev",
 		"clean": "rimraf dist && rimraf lib",
-		"deploy": "npm run clean && npm run build && npm publish"
+		"deploy": "npm run clean && npm run build && npm publish",
+		"buildExample": "npm run build && cd example && npm run build",
+		"devExample": "npm run build && cd example && npm run dev",
+		"tryBrowserExample": "npm run dev",
+		"tryServerSideExample": "npm run build && node example/nodeExample.js"
 	},
 	"license": "ISC",
 	"devDependencies": {
