@@ -20,8 +20,8 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "ttsc && node build.js",
-		"build-all": "ttsc && node build.js && cd example && npm run build",
+		"build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --browser --node",
+		"build-all": "npm run build && cd example && npm run build",
 		"dev": "npm run build && cd example && npm run dev",
 		"clean": "rimraf dist && rimraf lib",
 		"deploy": "npm run clean && npm run build && npm publish"
@@ -34,11 +34,15 @@
 		"ws": "^8.8.1"
 	},
 	"devDependencies": {
+		"@rollup/plugin-commonjs": "^24.0.1",
+		"@rollup/plugin-node-resolve": "^15.0.1",
+		"@rollup/plugin-typescript": "^11.0.0",
 		"@types/ws": "^8.5.3",
 		"arweave": "^1.10.23",
-		"esbuild": "^0.13.14",
 		"rimraf": "^3.0.2",
-		"ttypescript": "^1.5.12",
-		"typescript": "^4.5.3"
+		"rollup": "^3.17.3",
+		"tslib": "^2.5.0",
+		"ttypescript": "^1.5.15",
+		"typescript": "4.7.2"
 	}
 }
