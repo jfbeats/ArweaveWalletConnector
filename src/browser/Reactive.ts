@@ -27,11 +27,11 @@ type Options = {
 
 
 export class ReactiveConnector extends BrowserConnector {
-	static _instance: ReactiveConnector
-	_state!: { value: State }
-	_setState?: (state: State) => any
-	_subs = [] as any[]
-	_localStorageKey = 'arweave-wallet-connector:URL' as string | false
+	private static _instance: ReactiveConnector
+	private _state!: { value: State }
+	private _setState?: (state: State) => any
+	private _subs = [] as any[]
+	private _localStorageKey = 'arweave-wallet-connector:URL' as string | false
 	constructor (appInfo?: AppInfo, options?: Options) {
 		super(appInfo, parseState(options?.state)?.url)
 		this.setState(options?.state)
