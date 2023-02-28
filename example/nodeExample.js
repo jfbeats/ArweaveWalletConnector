@@ -1,8 +1,8 @@
-import { ArweaveWebWallet } from 'arweave-wallet-connector/lib/node'
+import { ArweaveWalletServer } from 'arweave-wallet-connector/lib/node'
 import Arweave from 'arweave'
 
-// todo fix type declarations and disconnect
-const wallet = new ArweaveWebWallet('arweave.app')
+// todo fix disconnect
+const wallet = new ArweaveWalletServer('arweave.app')
 
 const main = async () => {
 	console.log('Launching a connection to talk to arweave.app from node.js')

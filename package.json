@@ -25,7 +25,7 @@
 		"deploy": "npm run clean && npm run build && npm publish",
 		"buildExample": "npm run build && cd example && npm run build",
 		"devExample": "npm run build && cd example && npm run dev",
-		"tryBrowserExample": "npm run dev",
+		"tryBrowserExample": "npm run devExample",
 		"tryServerSideExample": "npm run build && node example/nodeExample.js"
 	},
 	"license": "ISC",

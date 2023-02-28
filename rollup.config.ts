@@ -10,7 +10,7 @@ export default async (args: { [key: string]: true | undefined }) => {
 	const getParam = (param: string) => { if (!args[param]) { return } else { delete args[param]; return true } }
 	const getConfig = async (options: RollupOptions) => {
 		const outDir = Array.isArray(options.output) ? options.output[0].dir : options.output?.dir
-		const declaration = true
+		const declaration = outDir === 'lib'
 		const optionsPluginsAwaited = await options.plugins || []
 		const optionsPlugins = Array.isArray(optionsPluginsAwaited) ? optionsPluginsAwaited : [optionsPluginsAwaited]
 		return {
@@ -21,7 +21,7 @@ export default async (args: { [key: string]: true | undefined }) => {
 					typescript: ttypescript,
 					outDir,
 					declaration,
-					declarationDir: declaration ? outDir : undefined,
+					include: 'src/**/*',
 					exclude: 'rollup.config.ts',
 				}),
 				resolve(),
