@@ -138,7 +138,20 @@ function App () {
 }
 ```
 
+## Wallet Server
 
+If your app is running in a context with the ability to create a web socket server (node, native apps, etc.), it is possible to communicate to wallet providers through that link 
+
+### Node.js
+
+From a server running on the local machine. For example, can be used to request a service fee or data upload
+
+```js
+import { ArweaveWalletServer } from 'arweave-wallet-connector/lib/node'
+const wallet = new ArweaveWalletServer('arweave.app')
+await wallet.connect()
+await wallet.signTransaction( /* ... */ )
+```
 
 
 
