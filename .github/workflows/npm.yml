@@ -5,5 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: NPM
     steps:
-      - run: npm install
-      - run: npm run deploy
+      - uses: actions/checkout@v3
+        with:
+          ref: dev
+      - run: |
+          npm install
+          npm run build
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM }}
