@@ -43,7 +43,7 @@ export interface ArweaveInterface {
 	getPublicKey(): Promise<string>
 	getArweaveConfig(): Promise<Omit<ApiConfig, 'logger'>>
 	signTransaction(tx: Transaction, options?: object | Null): Promise<Transaction>
-	signDataItem(tx: DataItemParamsUnsigned): Promise<DataItemParams>
+	signDataItem(tx: DataItemParamsUnsigned): Promise<ArrayBuffer>
 	signMessage(message: ArrayBufferView, options: SignMessageOptions): Promise<ArrayBufferView>
 	verifyMessage(message: ArrayBufferView, signature: ArrayBufferView, publicKey: string, options: VerifyMessageOptions): Promise<boolean>
 	dispatch(tx: Transaction, options?: object | Null): Promise<DispatchResult>
@@ -55,7 +55,6 @@ export interface ArweaveProviderInterface extends Override<ArweaveInterface, {
 	getArweaveConfig(): Promise<Override<ApiConfig, { logger?: any }>>
 	signTransaction(tx: Partial<SerializedTx>, options?: object | Null): Promise<{
 		id: string, owner?: string | Null, tags?: SerializedTx['tags'] | Null, signature: string, reward?: string | Null }>
-	signDataItem(tx: DataItemParamsUnsigned): Promise<DataItemParams>
 	dispatch(tx: Partial<SerializedTx>, options?: object | Null): Promise<DispatchResult>
 }> {}
 interface FromArweaveProvider extends FromProvider<ArweaveProviderInterface> {}
@@ -121,8 +120,8 @@ export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 		
 		async signDataItem(tx: DataItemParamsUnsigned) {
 			const res = await this.postMessage('signDataItem', [tx])
-			if (!is<FromArweaveProvider['signDataItem']>(res)) { throw 'TypeError' }
-			return res
+			if (!ArrayBuffer.isView(res)) { throw 'TypeError' }
+			return res.buffer
 		}
 
 		async dispatch(tx: Transaction, options?: object | Null) {

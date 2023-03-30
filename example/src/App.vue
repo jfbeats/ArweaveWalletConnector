@@ -38,7 +38,7 @@
 					<input v-model="message" style="flex: 1 1 0; text-align: right;" />
 				</div>
 			</div>
-			<div class="row">
+			<div class="row" style="flex-wrap: wrap;">
 				<button class="button" v-if="wallet.address" @click="signTransaction">
 					<Rule />
 					<span>Sign Transaction</span>
@@ -47,25 +47,33 @@
 					<Rule />
 					<span>Dispatch Data</span>
 				</button>
+				<button class="button" v-if="wallet.address" @click="signDataItem">
+					<Rule />
+					<span>Sign DataItem</span>
+				</button>
 			</div>
 			<CodeBox :code="code[1]" />
 			<div />
 		</section>
 		<section v-if="currentStep >= 2" id="s2">
-			<template v-if="txUpload.signResult || txUpload.dispatchResult">
+			<template v-if="txUpload.signResult || txUpload.dispatchResult || txUpload.signDataItemResult">
 				<template v-if="txUpload.signResult">
-					<div>Why choose signTransaction?</div>
+					<div>Why choose .signTransaction()?</div>
 					<div>After the signature is applied by the user, you have full control on the way that the transaction is submitted to the arweave network</div>
 					<div>For example: when interacting with a smart contract, instead of using dispatch (which would handle everything automatically), use this method to make sure that your interactions are not submitted to a bundler service or, force them to use your own that's compatible with the runtime</div>
 				</template>
 				<template v-if="txUpload.dispatchResult">
-					<div>Why choose dispatch for data?</div>
+					<div>Why choose .dispatch()?</div>
 					<div v-if="parseFloat(arInput) > 0">You can transfer AR tokens using the dispatch method. However, the transfer amount was automatically set to 0 in this example so that the wallet provider can use the preferred bundler service by default. Normally, when transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
 					<div v-else>The wallet provider can select the preferred bundler service. When transferring AR tokens, the provider will likely choose to use base transactions instead of bundled ones by default</div>
 					<div>Free storage for users 🤯 (potentially)</div>
 					<div>Data only transactions going through the bundling service are currently subsidized (up to a specific size limit), this allows for accounts with no funds to also be able to commit permanent data</div>
 				</template>
-				<div v-if="txUpload.signResult" class="row">
+				<template v-if="txUpload.signDataItemResult">
+					<div>Why choose .signDataItem()?</div>
+					<div>In some scenarios, you may need to process and submit DataItems to a specific bundler. If the latter does not specifically apply to your use case, the .dispatch() method is a better choice. Make sure that you understand the implications of the DataItem "anchor" field and replay attacks</div>
+				</template>
+				<div v-if="txUpload.signResult || txUpload.signDataItemResult" class="row">
 					<button class="button" @click="postTransaction">
 						<Upload />
 						<span v-if="!txUpload.upload">Upload Transaction</span>
@@ -141,10 +149,15 @@ const transactionData = reactive({
 	quantity: arweave.ar.arToWinston(arInput.value),
 	data: message.value,
 })
+function getTransactionDataOnly () {
+	const { quantity, ...data } = transactionData
+	return data
+}
 
 const getTxUpload = () => ({
 	signResult: null as null | Transaction,
 	dispatchResult: null as null | DispatchResult,
+	signDataItemResult: null as null | object,
 	error: null as any,
 	upload: null as null | number
 })
@@ -153,7 +166,7 @@ const resetTxUpload = () => txUpload.value = getTxUpload()
 
 const signTransaction = async () => {
 	resetTxUpload()
-	currentStep.value = 1
+	if (currentStep.value < 1) { currentStep.value = 1 }
 	try {
 		const transaction = await arweave.createTransaction({ ...transactionData })
 		transaction.addTag('App-Name', +transactionData.quantity > 0 && transactionData.target === 'TId0Wix2KFl1gArtAT6Do1CbWU_0wneGvS5X9BfW5PE' ? 'Dev donation' : 'Trying out the connector')
@@ -162,20 +175,20 @@ const signTransaction = async () => {
 		transaction.addTag('Tag-3', 'you can sign it here and not send it on the next page')
 		await wallet.signTransaction(transaction)
 		txUpload.value.signResult = transaction
-		currentStep.value = 2
+		if (currentStep.value < 2) { currentStep.value = 2 }
 	} catch (e) {
 		console.error(e)
 		txUpload.value.error = e
-		currentStep.value = 2
+		if (currentStep.value < 2) { currentStep.value = 2 }
 	}
 }
 
 const dispatchData = async () => {
 	resetTxUpload()
-	currentStep.value = 1
+	if (currentStep.value < 1) { currentStep.value = 1 }
 	try {
-		const { quantity, ...data } = transactionData
-		const transaction = await arweave.createTransaction({ ...data })
+		transactionData.quantity = '0'
+		const transaction = await arweave.createTransaction(getTransactionDataOnly())
 		transaction.addTag('App-Name', 'Trying out the connector')
 		transaction.addTag('Tag-1', 'transaction tags are all displayed here')
 		transaction.addTag('Tag-2', 'this is a real transaction')
@@ -183,23 +196,48 @@ const dispatchData = async () => {
 		transaction.addTag('Tag-3.5', 'include it into the arweave network')
 		const result = await wallet.dispatch(transaction)
 		txUpload.value.dispatchResult = result
-		currentStep.value = 2
+		if (currentStep.value < 2) { currentStep.value = 2 }
 	} catch (e) {
 		console.error(e)
 		txUpload.value.error = e
-		currentStep.value = 2
+		if (currentStep.value < 2) { currentStep.value = 2 }
+	}
+}
+
+const signDataItem = async () => {
+	resetTxUpload()
+	if (currentStep.value < 1) { currentStep.value = 1 }
+	try {
+		// TODO import
+		const { DataItem } = await import('./../scripts/arbundles')
+		const dataItem = new DataItem(new Buffer(await wallet.signDataItem({ ...getTransactionDataOnly(), tags: [
+			{ name: 'App-Name', value: 'Trying out the connector' },
+		] })))
+		txUpload.value.signDataItemResult = dataItem
+		if (currentStep.value < 2) { currentStep.value = 2 }
+	} catch (e) {
+		console.error(e)
+		txUpload.value.error = e
+		if (currentStep.value < 2) { currentStep.value = 2 }
 	}
 }
 
 
-
 const postTransaction = async () => {
-	if (!txUpload.value.signResult) { return }
-	const uploader = await arweave.transactions.getUploader(txUpload.value.signResult)
-	while (!uploader.isComplete) {
-		try { await uploader.uploadChunk() } catch (e) { console.error(e) }
+	if (txUpload.value.signResult) {
+		const uploader = await arweave.transactions.getUploader(txUpload.value.signResult)
+		while (!uploader.isComplete) {
+			try { await uploader.uploadChunk() } catch (e) { console.error(e) }
+		}
+		txUpload.value.upload = uploader.lastResponseStatus
+	} else if (txUpload.value.signDataItemResult) {
+		const res = await fetch('https://node2.bundlr.network/tx', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/octet-stream' },
+			body: (txUpload.value.signDataItemResult as any).getRaw()
+		})
+		txUpload.value.upload = res.status
 	}
-	txUpload.value.upload = uploader.lastResponseStatus
 }
 
 
@@ -301,18 +339,24 @@ await wallet.connect() // on user gesture to avoid blocked popup
 `const transaction = await arweave.createTransaction({
 ${txToString(transactionData)}})
 
-// sign the transaction and upload it yourself
+// sign a Transaction and upload it yourself
 await wallet.signTransaction(transaction)
 
 // or let the wallet handle the whole process of committing the
 // transaction and uploading its data into the arweave network for you
 const dispatchResult = await wallet.dispatch(transaction)
+
+// sign a DataItem and upload it to a specific bundler yourself
+const dataItem = new DataItem(new Buffer(await wallet.signDataItem({
+${txToString(getTransactionDataOnly())}})))
 `,
 
 
 
-`${ txUpload.value.dispatchResult ? 'dispatchResult is ' : 'transaction is ' }{
-${txToString(txUpload.value.signResult || txUpload.value.dispatchResult)}}
+`${ txUpload.value.dispatchResult ? 'dispatchResult is '
+	: txUpload.value.signResult ? 'Transaction is '
+	: 'DataItem is ' }{
+${txToString(txUpload.value.signResult || txUpload.value.dispatchResult || (txUpload.value.signDataItemResult as any)?.toJSON?.())}}
 `,
 
 
@@ -345,6 +389,7 @@ watch(currentStep, value => {
 	align-items: center;
 	padding: var(--app-spacing);
 	padding-bottom: 0;
+	gap: var(--app-spacing);
 }
 
 @media (max-width: 599px) {
@@ -360,10 +405,6 @@ watch(currentStep, value => {
 	}
 }
 
-.app > * + * {
-	margin-block-start: var(--app-spacing);
-}
-
 section {
 	min-height: 100vh;
 	width: 100%;
@@ -371,23 +412,17 @@ section {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+	gap: var(--app-spacing);
 }
 
 section > *:first-child {
 	margin-top: calc(var(--app-spacing) * 2 + 5em);
 }
 
-section > * + * {
-	margin-block-start: var(--app-spacing);
-}
-
 .row {
 	display: flex;
 	justify-content: center;
-}
-
-.row > * + * {
-	margin-inline-start: var(--app-spacing);
+	gap: var(--app-spacing);
 }
 
 .logo {
@@ -435,6 +470,7 @@ button {
 	box-shadow: 5px 5px 20px #070707, -5px -5px 20px #1b1b1b;
 	transition: 1s ease;
 	justify-content: center;
+	gap: 1.5em;
 }
 
 .button:hover {
@@ -444,10 +480,6 @@ button {
 .button:active {
 	background: #111;
 	transition: 0s ease;
-}
-
-.button > * + * {
-	margin-inline-start: 1.5em;
 }
 </style>
 
