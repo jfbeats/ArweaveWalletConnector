@@ -347,6 +347,7 @@ await wallet.signTransaction(transaction)
 const dispatchResult = await wallet.dispatch(transaction)
 
 // sign a DataItem and upload it to a specific bundler yourself
+import { DataItem } from 'arbundles'
 const dataItem = new DataItem(new Buffer(await wallet.signDataItem({
 ${txToString(getTransactionDataOnly())}})))
 `,
