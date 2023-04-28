@@ -22,7 +22,7 @@ interface DataItemCreateOptions {
 	}[];
 }
 export interface DataItemParams extends Override<DataItemCreateOptions, {
-	data?: string
+	data?: string | Uint8Array | NodeJS.ReadableStream
 	signature: string
 }> {}
 type DataItemParamsUnsigned = Omit<DataItemParams, 'signature'>
