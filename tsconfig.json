@@ -2,8 +2,7 @@
 	"compilerOptions": {
 		"plugins": [
 			{
-				"transform": "typescript-is/lib/transform-inline/transformer",
-				"functionBehavior": "basic"
+				"transform": "typia/lib/transform"
 			}
 		],
 		"target": "ES6",
@@ -20,7 +19,8 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"traceResolution": false
+		"traceResolution": false,
+		"strictNullChecks": true
 	},
 	"include": [
 		"src/**/*",
