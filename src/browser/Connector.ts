@@ -5,7 +5,7 @@ import { load, unload } from '../utils/Inject.js'
 import { windowMissing } from '../utils/Errors.js'
 import type { Emitting as InternalBridgeMap } from './Bridge.js'
 import type { Connection, AppInfo, PostMessageOptions, Flatten, UnionToIntersection, ProtocolInfo } from '../types.js'
-import { is } from 'typescript-is'
+import { is } from 'typia'
 
 
 

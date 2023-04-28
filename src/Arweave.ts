@@ -4,7 +4,7 @@ import type Transaction from 'arweave/web/lib/transaction.js'
 // import type { DataItemCreateOptions } from 'arbundles'
 import type { TransactionInterface } from 'arweave/web/lib/transaction.js'
 import type { ApiConfig } from 'arweave/web/lib/api.js'
-import { is } from 'typescript-is'
+import { is } from 'typia'
 
 // todo find a way to verify that file name extension for import is always specified
 
@@ -22,7 +22,7 @@ interface DataItemCreateOptions {
 	}[];
 }
 export interface DataItemParams extends Override<DataItemCreateOptions, {
-	data?: string
+	data?: string | Uint8Array | NodeJS.ReadableStream
 	signature: string
 }> {}
 type DataItemParamsUnsigned = Omit<DataItemParams, 'signature'>
