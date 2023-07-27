@@ -75,6 +75,7 @@ export function ArweaveApi<TBase extends ConnectionConstructor>(Base: TBase) {
 				getAllAddresses: () => { throw 'not implemented' },
 				getWalletNames: () => { throw 'not implemented' },
 				signature: () => { throw 'deprecated, do not use' },
+				signMessage: (data: Uint8Array, options: any) => this.signMessage(data,options),
 				sign: (tx: Transaction, options?: any) => this.signTransaction(tx, options),
 				dispatch: (tx: Transaction, options?: any) => this.dispatch(tx, options),
 				encrypt: async (data: Uint8Array, options: any) => {
